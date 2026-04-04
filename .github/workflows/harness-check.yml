@@ -1,0 +1,36 @@
+name: Harness Check
+
+on:
+  workflow_call:
+    inputs:
+      preset:
+        description: '检查预设'
+        required: false
+        default: 'standard'
+        type: string
+      node-version:
+        description: 'Node.js 版本'
+        required: false
+        default: '20'
+        type: string
+      skip-tests:
+        description: '跳过测试门控'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  harness-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+      - run: npm ci
+        continue-on-error: true
+      - run: npx @kww/harness check --preset ${{ inputs.preset }}
+      - run: npx @kww/harness validate
+        continue-on-error: true
+      - if: ${{ !inputs.skip-tests }}
+        run: npx @kww/harness passes-gate
