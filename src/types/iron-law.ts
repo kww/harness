@@ -31,6 +31,8 @@ export type IronLawTrigger =
   | 'module_creation'         // 创建新模块
   | 'module_modification'     // 修改核心模块
   | 'module_deletion'         // 删除模块
+  | 'module_extension'        // 扩展现有模块
+  | 'feature_development'     // 实现新功能
   | 'api_change'              // API 变更
   | 'export_change'           // 导出变更
   | 'file_creation'           // 创建文件
@@ -53,8 +55,8 @@ export interface IronLaw {
   /** 铁律消息（中文） */
   message: string;
   
-  /** 触发条件 */
-  trigger: IronLawTrigger;
+  /** 触发条件（支持多个 trigger） */
+  trigger: IronLawTrigger | IronLawTrigger[];
   
   /** 强制执行的技能/步骤 */
   enforcement: string;

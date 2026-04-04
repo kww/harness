@@ -130,7 +130,9 @@ export class IronLawChecker {
     const applicableLaws: string[] = [];
 
     for (const [lawId, law] of Object.entries(IRON_LAWS)) {
-      if (law.trigger === context.operation) {
+      // 支持单个 trigger 或数组 trigger
+      const triggers = Array.isArray(law.trigger) ? law.trigger : [law.trigger];
+      if (triggers.includes(context.operation)) {
         applicableLaws.push(lawId);
       }
     }

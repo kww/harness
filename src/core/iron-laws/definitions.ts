@@ -75,10 +75,17 @@ export const IRON_LAWS: Record<string, IronLaw> = {
     id: 'no_creation_without_reuse_check',
     rule: 'NO NEW CAPABILITIES WITHOUT REUSE CHECK FIRST',
     message: '在创建新能力之前，必须先检查是否有可复用的现有能力',
-    trigger: 'step_creation',
+    trigger: [
+      'step_creation',
+      'tool_creation',
+      'workflow_creation',
+      'module_creation',
+      'module_extension',
+      'feature_development',
+    ],
     enforcement: 'reuse-first',
     severity: 'warning',
-    description: '在创建新的 step/tool/workflow 之前，必须先执行复用检查，避免重复造轮子',
+    description: '在创建新能力（step/tool/workflow/module）或实现新功能之前，必须先执行复用检查，避免重复造轮子',
   },
 
   // ========================================
