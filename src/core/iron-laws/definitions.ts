@@ -14,6 +14,20 @@ export { IronLawViolationError } from '../../types/iron-law';
  */
 export const IRON_LAWS: Record<string, IronLaw> = {
   // ========================================
+  // 开发铁律（约束 AI 行为）
+  // ========================================
+  
+  no_simplification_without_approval: {
+    id: 'no_simplification_without_approval',
+    rule: 'NO SIMPLIFYING LOGIC WITHOUT USER APPROVAL',
+    message: '不能为了快速完成任务而自行简化逻辑',
+    trigger: 'code_implementation',
+    enforcement: 'preserve-complexity',
+    severity: 'error',
+    description: '在实现或修改代码时，遇到复杂度问题应该向用户说明并请求指示，而不是自行简化逻辑导致功能缺失',
+  },
+
+  // ========================================
   // 核心铁律（来自 Superpowers 框架）
   // ========================================
   

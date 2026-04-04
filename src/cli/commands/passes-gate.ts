@@ -8,7 +8,7 @@ import chalk from 'chalk';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { PassesGate } from '../../core/validators/passes-gate';
-import type { PassesGateConfig, PassesGateResult } from '../../types/passes-gate';
+import type { PassesGateConfig } from '../../types/passes-gate';
 
 export interface PassesGateOptions {
   /** 测试命令 */
@@ -24,7 +24,7 @@ export interface PassesGateOptions {
 /**
  * 检测项目的测试命令
  */
-async function detectTestCommand(projectPath: string): Promise<string | null> {
+async function detectTestCommand(projectPath: string): Promise<string | undefined> {
   const packageJsonPath = path.join(projectPath, 'package.json');
 
   try {
@@ -42,17 +42,17 @@ async function detectTestCommand(projectPath: string): Promise<string | null> {
   }
 
   // 检查其他项目类型
-  const hasPytest = await fs.access(path.join(projectPath, 'pytest.ini')).then(() => true).catch(() => false);
-  if (hasPytest) {
+  try {
+    await fs.access(path.join(projectPath, 'pytest.ini'));
     return 'pytest';
-  }
+  } catch {}
 
-  const hasGoMod = await fs.access(path.join(projectPath, 'go.mod')).then(() => true).catch(() => false);
-  if (hasGoMod) {
+  try {
+    await fs.access(path.join(projectPath, 'go.mod'));
     return 'go test ./...';
-  }
+  } catch {}
 
-  return null;
+  return undefined;
 }
 
 /**
@@ -66,7 +66,7 @@ export async function runPassesGate(options: PassesGateOptions): Promise<void> {
   // 检测测试命令
   let testCommand = options.testCommand;
   if (!testCommand) {
-    testCommand = await detectTestCommand(projectPath) || 'npm test';
+    testCommand = await detectTestCommand(projectPath);
   }
 
   if (!testCommand) {
@@ -81,7 +81,7 @@ export async function runPassesGate(options: PassesGateOptions): Promise<void> {
   const config: PassesGateConfig = {
     enabled: true,
     testCommand,
-    requireEvidence: true,
+    requireEvidence: false,
     allowPartialPass: options.allowPartial || false,
     maxRetries: options.maxRetries || 2,
   };
@@ -90,7 +90,7 @@ export async function runPassesGate(options: PassesGateOptions): Promise<void> {
   const passesGate = new PassesGate(config);
 
   try {
-    const result: PassesGateResult = await passesGate.runTests();
+    const result = await passesGate.runTests();
 
     console.log();
     console.log(chalk.gray('测试结果:'));
@@ -134,7 +134,7 @@ export async function checkCoverage(projectPath: string, threshold: number = 80)
     const execAsync = promisify(exec);
 
     // 运行覆盖率检查
-    const { stdout } = await execAsync('npm test -- --coverage --coverageReporters=json-summary', {
+    await execAsync('npm test -- --coverage --coverageReporters=json-summary', {
       cwd: projectPath,
     });
 

@@ -26,20 +26,6 @@ export interface PassesGateConfig {
 }
 
 /**
- * 单个测试失败信息
- */
-export interface TestFailure {
-  /** 测试名称 */
-  name: string;
-  
-  /** 失败消息 */
-  message: string;
-  
-  /** 堆栈信息 */
-  stack?: string;
-}
-
-/**
  * 测试结果
  */
 export interface TaskTestResult {
@@ -58,60 +44,37 @@ export interface TaskTestResult {
   /** 执行时间（毫秒） */
   duration?: number;
   
-  /** 覆盖率（可选） */
-  coverage?: {
-    lines?: number;
-    branches?: number;
-    functions?: number;
-    statements?: number;
-  };
+  /** 时间戳 */
+  timestamp?: Date;
   
   /** 失败的测试列表 */
-  failures?: TestFailure[];
+  failures?: string[];
   
-  /** 证据（可选） */
-  evidence?: {
-    type: 'test_output' | 'coverage_report' | 'custom';
-    content: string;
-  };
+  /** 覆盖率 */
+  coverage?: number;
+  
+  /** 证据路径 */
+  evidence?: string;
 }
 
 /**
  * 测试门控结果
  */
 export interface PassesGateResult {
-  /** 是否通过 */
-  passed: boolean;
+  /** 任务 ID */
+  taskId: string;
   
-  /** 测试结果列表 */
-  testResults: TaskTestResult[];
+  /** 是否允许设置 */
+  allowed: boolean;
   
-  /** 通过的测试数量 */
-  passedTests: number;
+  /** 测试结果 */
+  testResult?: TaskTestResult;
   
-  /** 失败的测试数量 */
-  failedTests: number;
+  /** 尝试次数 */
+  attempts: number;
   
-  /** 总测试数量 */
-  totalTests: number;
-  
-  /** 执行时间（毫秒） */
-  duration: number;
-  
-  /** 失败的测试列表 */
-  failures?: TestFailure[];
-  
-  /** 证据（可选） */
-  evidence?: {
-    type: 'test_output' | 'coverage_report' | 'custom';
-    content: string;
-  };
-  
-  /** 验证时间 */
-  timestamp: number;
-  
-  /** 消息 */
-  message?: string;
+  /** 错误信息 */
+  error?: string;
 }
 
 /**

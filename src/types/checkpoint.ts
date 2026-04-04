@@ -28,7 +28,10 @@ export interface CheckConfig {
   path?: string;
   
   /** 预期值（用于 contains 检查） */
-  expected?: string | string[];
+  expected?: string | number | boolean | object;
+  
+  /** 内容（用于 file_contains 检查） */
+  content?: string;
   
   /** 正则表达式（用于 matches 检查） */
   pattern?: string;
@@ -64,7 +67,7 @@ export interface CheckConfig {
   timeout?: number;
   
   /** 自定义检查函数名 */
-  handler?: string;
+  customFunction?: string;
 }
 
 /**
@@ -158,17 +161,13 @@ export interface CheckpointContext {
   projectPath: string;
   
   /** 工作目录 */
-  workdir?: string;
+  workdir: string;
   
   /** 环境变量 */
   env?: Record<string, string>;
   
   /** 步骤输出（用于 output_* 检查） */
-  stepOutput?: {
-    stdout?: string;
-    stderr?: string;
-    exitCode?: number;
-  };
+  output?: any;
   
   /** 自定义检查处理器 */
   customHandlers?: Map<string, (config: CheckConfig) => Promise<CheckResult>>;
