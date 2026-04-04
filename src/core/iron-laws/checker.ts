@@ -117,6 +117,11 @@ export class IronLawChecker {
         // TODO: 检查是否有 README
         return true;
 
+      case 'simplest_solution_first':
+        // 检查是否已检查本地数据源
+        // TODO: 可以扩展为检查是否选择了最简单方案
+        return context.hasReuseCheck === true;
+
       default:
         // 未知铁律，默认通过
         return true;

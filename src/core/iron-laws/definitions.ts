@@ -161,6 +161,20 @@ export const IRON_LAWS: Record<string, IronLaw> = {
   },
 
   // ========================================
+  // 设计铁律（避免过度设计）
+  // ========================================
+
+  simplest_solution_first: {
+    id: 'simplest_solution_first',
+    rule: 'ALWAYS CHOOSE THE SIMPLEST IMPLEMENTATION PATH',
+    message: '优先使用最简单、最近的数据源，避免过度设计',
+    trigger: ['feature_development', 'module_extension', 'code_implementation'],
+    enforcement: 'check-local-first',
+    severity: 'warning',
+    description: '在实现功能时，必须检查：1) 是否有本地数据源？2) 是否有更简单的方案？3) 远程查询/复杂架构是否必要？',
+  },
+
+  // ========================================
   // 文档铁律
   // ========================================
   
