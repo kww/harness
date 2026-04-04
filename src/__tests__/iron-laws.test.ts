@@ -8,8 +8,8 @@ import { IronLawChecker } from '../core/iron-laws/checker';
 import type { IronLawContext } from '../types/iron-law';
 
 describe('Iron Law Definitions', () => {
-  it('should have 13 iron laws defined', () => {
-    expect(Object.keys(IRON_LAWS)).toHaveLength(13);
+  it('should have 14 iron laws defined', () => {
+    expect(Object.keys(IRON_LAWS)).toHaveLength(14);
   });
 
   it('should find laws by trigger', () => {
@@ -20,7 +20,7 @@ describe('Iron Law Definitions', () => {
 
   it('should get all laws', () => {
     const laws = getAllLaws();
-    expect(laws.length).toBe(13);
+    expect(laws.length).toBe(14);  // 14 条内置铁律
   });
 
   it('should get single law by id', () => {

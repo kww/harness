@@ -22,6 +22,7 @@ export type IronLawTrigger =
   | 'task_completion_claim'   // 声明任务完成
   | 'skill_creation'          // 创建新技能
   | 'code_implementation'     // 编写实现代码
+  | 'test_creation'           // 创建测试
   | 'workflow_execution'      // 执行工作流
   | 'step_execution'          // 执行步骤
   | 'step_creation'           // 创建新步骤

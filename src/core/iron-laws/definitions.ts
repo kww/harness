@@ -123,6 +123,16 @@ export const IRON_LAWS: Record<string, IronLaw> = {
   // 测试铁律
   // ========================================
   
+  no_test_simplification: {
+    id: 'no_test_simplification',
+    rule: 'NO SIMPLIFYING TESTS TO AVOID DIFFICULTY',
+    message: '禁止为了绕过困难而简化测试，遇到测试问题必须解决或向用户说明',
+    trigger: 'test_creation',
+    enforcement: 'full-test-coverage',
+    severity: 'error',
+    description: '在编写测试时，不能因为遇到困难（如 mock 问题、异步问题）而简化或跳过测试。必须完整实现测试，或向用户说明困难并请求指示',
+  },
+
   test_coverage_required: {
     id: 'test_coverage_required',
     rule: 'TEST COVERAGE MUST MEET REQUIREMENTS',
