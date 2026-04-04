@@ -6,8 +6,8 @@
  * 通用工程约束框架
  */
 
-import { Command } from 'commander';
-import { check, listLaws, validate, runPassesGate, init, report } from '../dist/cli/commands/index.js';
+const { Command } = require('commander');
+const { check, listLaws, validate, runPassesGate, init, report } = require('../dist/cli/commands/index');
 
 const program = new Command();
 
