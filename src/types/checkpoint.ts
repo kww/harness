@@ -9,31 +9,86 @@ export type CheckType =
   | 'file_exists'
   | 'file_not_empty'
   | 'file_contains'
+  | 'file_not_contains'
   | 'command_success'
+  | 'command_output'
+  | 'output_contains'
+  | 'output_not_contains'
+  | 'output_matches'
+  | 'json_path'
+  | 'http_status'
+  | 'http_body'
   | 'custom';
 
 /**
  * 检查配置
  */
-export interface CheckpointCheck {
-  /** 检查类型 */
-  type: CheckType;
-  
-  /** 检查目标（文件路径、命令等） */
-  target?: string;
+export interface CheckConfig {
+  /** 文件路径（用于文件检查） */
+  path?: string;
   
   /** 预期值（用于 contains 检查） */
-  expected?: string;
+  expected?: string | string[];
+  
+  /** 正则表达式（用于 matches 检查） */
+  pattern?: string;
+  
+  /** JSON 路径（用于 json_path 检查） */
+  jsonPath?: string;
+  
+  /** HTTP URL（用于 http 检查） */
+  url?: string;
+  
+  /** HTTP 方法 */
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  
+  /** HTTP 请求体 */
+  body?: any;
+  
+  /** HTTP 请求头 */
+  headers?: Record<string, string>;
+  
+  /** 预期 HTTP 状态码 */
+  expectedStatus?: number;
+  
+  /** 命令（用于 command 检查） */
+  command?: string;
+  
+  /** 工作目录 */
+  workdir?: string;
+  
+  /** 环境变量 */
+  env?: Record<string, string>;
+  
+  /** 超时时间（毫秒） */
+  timeout?: number;
   
   /** 自定义检查函数名 */
   handler?: string;
-  
-  /** 错误消息 */
-  message?: string;
 }
 
 /**
- * 检查点配置
+ * 检查项定义
+ */
+export interface CheckpointCheck {
+  /** 检查 ID */
+  id: string;
+  
+  /** 检查类型 */
+  type: CheckType;
+  
+  /** 检查配置 */
+  config: CheckConfig;
+  
+  /** 错误消息 */
+  message?: string;
+  
+  /** 是否必须通过 */
+  required?: boolean;
+}
+
+/**
+ * 检查点定义
  */
 export interface Checkpoint {
   /** 检查点 ID */
@@ -53,7 +108,7 @@ export interface Checkpoint {
 }
 
 /**
- * 检查结果
+ * 单项检查结果
  */
 export interface CheckResult {
   /** 检查 ID */
@@ -67,6 +122,12 @@ export interface CheckResult {
   
   /** 错误详情 */
   error?: string;
+  
+  /** 实际值 */
+  actual?: any;
+  
+  /** 预期值 */
+  expected?: any;
 }
 
 /**
@@ -80,16 +141,13 @@ export interface CheckpointResult {
   passed: boolean;
   
   /** 各项检查结果 */
-  results: CheckResult[];
+  checks: CheckResult[];
   
-  /** 通过数量 */
-  passedCount: number;
-  
-  /** 失败数量 */
-  failedCount: number;
+  /** 消息 */
+  message?: string;
   
   /** 验证时间 */
-  timestamp: number;
+  validatedAt: Date;
 }
 
 /**
@@ -100,8 +158,18 @@ export interface CheckpointContext {
   projectPath: string;
   
   /** 工作目录 */
-  workDir?: string;
+  workdir?: string;
   
   /** 环境变量 */
   env?: Record<string, string>;
+  
+  /** 步骤输出（用于 output_* 检查） */
+  stepOutput?: {
+    stdout?: string;
+    stderr?: string;
+    exitCode?: number;
+  };
+  
+  /** 自定义检查处理器 */
+  customHandlers?: Map<string, (config: CheckConfig) => Promise<CheckResult>>;
 }

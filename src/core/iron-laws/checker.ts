@@ -4,14 +4,13 @@
  * 在执行关键操作前，强制检查铁律是否满足
  */
 
-import {
+import type {
   IronLaw,
   IronLawResult,
   IronLawContext,
-  IronLawViolationError,
-  IRON_LAWS,
   IronLawTrigger,
-} from './iron-laws';
+} from '../types/iron-law';
+import { IronLawViolationError, IRON_LAWS, findLawsByTrigger } from './definitions';
 
 /**
  * 铁律检查器
@@ -21,6 +20,9 @@ export class IronLawChecker {
 
   private constructor() {}
 
+  /**
+   * 获取单例实例
+   */
   static getInstance(): IronLawChecker {
     if (!IronLawChecker.instance) {
       IronLawChecker.instance = new IronLawChecker();
@@ -87,7 +89,36 @@ export class IronLawChecker {
         // 检查是否已进行复用检查
         return context.hasReuseCheck === true;
 
+      case 'no_self_approval':
+        // 检查是否有测试证据
+        return context.hasTest === true;
+
+      case 'test_coverage_required':
+        // TODO: 检查测试覆盖率
+        return true;
+
+      case 'capability_sync':
+        // TODO: 检查 CAPABILITIES.md 是否更新
+        return true;
+
+      case 'no_any_type':
+        // TODO: 检查代码中是否有 any 类型
+        return true;
+
+      case 'no_bypass_checkpoint':
+        // TODO: 检查是否跳过了检查点
+        return true;
+
+      case 'doc_required_for_public_api':
+        // TODO: 检查公共 API 是否有文档
+        return true;
+
+      case 'readme_required':
+        // TODO: 检查是否有 README
+        return true;
+
       default:
+        // 未知铁律，默认通过
         return true;
     }
   }
@@ -109,6 +140,8 @@ export class IronLawChecker {
 
   /**
    * 在执行前自动检查所有适用的铁律
+   * 
+   * @throws IronLawViolationError 如果有 error 级别的铁律违规
    */
   async beforeExecution(context: IronLawContext): Promise<void> {
     const applicableLaws = this.findApplicableLaws(context);
@@ -152,35 +185,29 @@ export class IronLawChecker {
   }
 }
 
-// 导出单例
-export const ironLawChecker = IronLawChecker.getInstance();
-
 /**
  * 快捷函数：检查铁律
  */
 export async function checkIronLaw(
-  operation: IronLawTrigger,
-  context?: Partial<IronLawContext>
-): Promise<IronLawResult[]> {
-  const fullContext: IronLawContext = {
-    operation,
-    ...context,
-  };
-
-  return ironLawChecker.checkAll(fullContext);
+  lawId: string,
+  context: IronLawContext
+): Promise<IronLawResult> {
+  return IronLawChecker.getInstance().check(lawId, context);
 }
 
 /**
- * 快捷函数：强制执行铁律检查（失败时抛出异常）
+ * 快捷函数：执行前检查
  */
-export async function enforceIronLaws(
-  operation: IronLawTrigger,
-  context?: Partial<IronLawContext>
-): Promise<void> {
-  const fullContext: IronLawContext = {
-    operation,
-    ...context,
-  };
-
-  await ironLawChecker.beforeExecution(fullContext);
+export async function checkBeforeExecution(context: IronLawContext): Promise<void> {
+  return IronLawChecker.getInstance().beforeExecution(context);
 }
+
+/**
+ * 快捷函数：检查所有铁律
+ */
+export async function checkAllIronLaws(context: IronLawContext): Promise<IronLawResult[]> {
+  return IronLawChecker.getInstance().checkAll(context);
+}
+
+// 导出单例
+export const ironLawChecker = IronLawChecker.getInstance();
