@@ -4,3 +4,4 @@
 
 export * from './iron-laws';
 export * from './validators';
+export * from './session';
