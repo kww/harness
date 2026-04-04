@@ -2,8 +2,8 @@
  * CLI 命令导出
  */
 
-export { check } from './check';
-export { validate } from './validate';
-export { passesGate } from './passes-gate';
-export { init } from './init';
-export { report } from './report';
+export { check, listLaws, type CheckOptions } from './check';
+export { validate, createExampleCheckpoint, type ValidateOptions } from './validate';
+export { runPassesGate, checkCoverage, type PassesGateOptions } from './passes-gate';
+export { init, type InitOptions } from './init';
+export { report, type ReportOptions } from './report';

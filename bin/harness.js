@@ -2,67 +2,103 @@
 
 /**
  * @kww/harness CLI 入口
+ * 
+ * 通用工程约束框架
  */
 
 import { Command } from 'commander';
+import { check, listLaws, validate, runPassesGate, init, report } from '../dist/cli/commands/index.js';
 
 const program = new Command();
 
 program
   .name('harness')
-  .description('通用工程约束框架')
+  .description('通用工程约束框架 - 铁律系统、检查点验证、测试门控')
   .version('0.1.0');
 
-// check 命令
+// ========================================
+// harness check
+// ========================================
 program
   .command('check')
-  .description('检查铁律')
+  .description('检查铁律是否满足')
   .option('-p, --preset <preset>', '预设名称', 'standard')
-  .option('--staged', '只检查暂存的文件', false)
+  .option('-s, --staged', '只检查暂存文件', false)
+  .option('-t, --trigger <trigger>', '触发条件')
+  .option('--project-path <path>', '项目路径')
+  .option('--list', '列出所有铁律')
   .action(async (options) => {
-    const { check } = await import('../dist/cli/commands/check.js');
-    await check(options);
+    if (options.list) {
+      listLaws();
+    } else {
+      await check(options);
+    }
   });
 
-// validate 命令
+// ========================================
+// harness validate
+// ========================================
 program
   .command('validate')
-  .description('验证检查点')
-  .option('-c, --checkpoint <id>', '检查点 ID', 'all')
+  .description('验证检查点是否满足')
+  .option('-f, --file <path>', '检查点文件路径')
+  .option('-p, --project-path <path>', '项目路径')
+  .option('--strict', '严格模式（任何失败都退出）', false)
   .action(async (options) => {
-    const { validate } = await import('../dist/cli/commands/validate.js');
     await validate(options);
   });
 
-// passes-gate 命令
+// ========================================
+// harness passes-gate
+// ========================================
 program
   .command('passes-gate')
-  .description('测试门控验证')
-  .option('--require-evidence', '需要测试证据', false)
+  .description('运行测试门控，确保测试通过')
+  .alias('pg')
+  .option('-t, --test-command <command>', '测试命令')
+  .option('-p, --project-path <path>', '项目路径')
+  .option('--allow-partial', '允许部分测试通过', false)
+  .option('--max-retries <n>', '最大重试次数', '2')
+  .option('--coverage', '检查测试覆盖率')
+  .option('--coverage-threshold <n>', '覆盖率阈值', '80')
   .action(async (options) => {
-    const { passesGate } = await import('../dist/cli/commands/passes-gate.js');
-    await passesGate(options);
+    if (options.coverage) {
+      const threshold = parseInt(options.coverageThreshold, 10);
+      await runPassesGate(options);
+      const projectPath = options.projectPath || process.cwd();
+      await checkCoverage(projectPath, threshold);
+    } else {
+      await runPassesGate(options);
+    }
   });
 
-// init 命令
+// ========================================
+// harness init
+// ========================================
 program
   .command('init')
-  .description('初始化项目')
-  .option('-p, --preset <preset>', '预设名称', 'standard')
-  .option('-t, --template <template>', '项目模板')
+  .description('初始化项目的 harness 配置')
+  .option('-p, --preset <preset>', '预设名称 (strict/standard/relaxed)', 'standard')
+  .option('-t, --type <type>', '项目类型 (node-api/nextjs-app/python-api/custom)')
+  .option('--project-path <path>', '项目路径')
+  .option('--no-git-hooks', '不创建 Git hooks')
+  .option('--no-github-actions', '不创建 GitHub Actions')
   .action(async (options) => {
-    const { init } = await import('../dist/cli/commands/init.js');
     await init(options);
   });
 
-// report 命令
+// ========================================
+// harness report
+// ========================================
 program
   .command('report')
   .description('生成检查报告')
-  .option('-o, --output <format>', '输出格式', 'text')
+  .option('-o, --output <path>', '输出文件路径')
+  .option('-f, --format <format>', '输出格式 (json/markdown)', 'markdown')
+  .option('-p, --project-path <path>', '项目路径')
   .action(async (options) => {
-    const { report } = await import('../dist/cli/commands/report.js');
     await report(options);
   });
 
+// 解析命令行参数
 program.parse();

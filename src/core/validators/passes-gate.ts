@@ -14,7 +14,7 @@ import {
   PassesGateResult,
   TaskTestResult,
   DynamicTask
-} from './types';
+} from '../../types/passes-gate';
 
 const execAsync = promisify(exec);
 

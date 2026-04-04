@@ -2,15 +2,24 @@
  * 验证器导出
  */
 
-// 暂时导出空对象，后续实现
-export const CheckpointValidator = {
-  validate: async () => ({ passed: true }),
-};
+export { CheckpointValidator } from './checkpoint';
+export { PassesGate } from './passes-gate';
+export { CSOValidator, type CSOValidationResult, type CSOIssue } from './cso';
 
-export const CSOValidator = {
-  validate: async () => ({ passed: true }),
-};
+// 重新导出类型
+export type {
+  Checkpoint,
+  CheckpointCheck,
+  CheckpointResult,
+  CheckResult,
+  CheckpointContext,
+  CheckType,
+  CheckConfig,
+} from '../../types/checkpoint';
 
-export const PassesGate = {
-  verify: async () => ({ passed: true }),
-};
+export type {
+  PassesGateConfig,
+  PassesGateResult,
+  TaskTestResult,
+  DynamicTask,
+} from '../../types/passes-gate';

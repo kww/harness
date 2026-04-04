@@ -4,7 +4,7 @@
  * 确保所有技能的 description 只描述触发条件，不总结工作流
  */
 
-import { WorkflowMeta, StepMeta, ToolMeta } from './types';
+import { WorkflowMeta, StepMeta, ToolMeta } from '../../types/cso';
 
 /**
  * CSO 验证结果

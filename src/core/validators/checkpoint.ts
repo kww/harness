@@ -15,7 +15,7 @@ import {
   CheckResult,
   CheckpointContext,
   CheckType,
-} from './checkpoint-types';
+} from '../../types/checkpoint';
 
 const execAsync = promisify(exec);
 
