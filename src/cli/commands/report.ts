@@ -179,7 +179,7 @@ function generateMarkdownReport(data: ReportData): string {
     lines.push(`| 覆盖率 | ${data.passesGate.coverage}% |`, ``);
   }
 
-  lines.push(`---`, `*报告由 @kww/harness 生成*`, ``);
+  lines.push(`---`, `*报告由 @dommaker/harness 生成*`, ``);
 
   return lines.join('\n');
 }
@@ -238,7 +238,7 @@ function generateHtmlReport(data: ReportData): string {
   </table>
 
   <footer style="margin-top: 40px; color: #999; text-align: center;">
-    报告由 @kww/harness 生成
+    报告由 @dommaker/harness 生成
   </footer>
 </body>
 </html>`;

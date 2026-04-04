@@ -18,6 +18,6 @@
     "ts-jest": "^29.1.0"
   },
   "dependencies": {
-    "@kww/harness": "^0.1.0"
+    "@dommaker/harness": "^0.1.0"
   }
 }

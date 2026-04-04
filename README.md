@@ -1,10 +1,10 @@
-# @kww/harness
+# @dommaker/harness
 
 > 通用工程约束框架 - 铁律系统、检查点验证、测试门控
 
 ## 简介
 
-`@kww/harness` 是一个通用的工程约束框架，帮助团队建立和强制执行代码质量标准。
+`@dommaker/harness` 是一个通用的工程约束框架，帮助团队建立和强制执行代码质量标准。
 
 ### 核心功能
 
@@ -19,7 +19,7 @@
 ## 安装
 
 ```bash
-npm install @kww/harness
+npm install @dommaker/harness
 ```
 
 ## 快速开始
@@ -87,7 +87,7 @@ jobs:
 ### 5. 在代码中使用
 
 ```typescript
-import { IronLawChecker, CheckpointValidator, PassesGate } from '@kww/harness';
+import { IronLawChecker, CheckpointValidator, PassesGate } from '@dommaker/harness';
 
 // 检查铁律
 const violations = await IronLawChecker.check(context);

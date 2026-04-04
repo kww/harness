@@ -1,5 +1,5 @@
 /**
- * @kww/harness - 主入口
+ * @dommaker/harness - 主入口
  * 
  * 通用工程约束框架
  */

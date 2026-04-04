@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * @kww/harness CLI 入口
+ * @dommaker/harness CLI 入口
  * 
  * 通用工程约束框架
  */
