@@ -9,7 +9,7 @@ import type {
   IronLawResult,
   IronLawContext,
   IronLawTrigger,
-} from '../types/iron-law';
+} from '../../types/iron-law';
 import { IronLawViolationError, IRON_LAWS, findLawsByTrigger } from './definitions';
 
 /**

@@ -66,7 +66,7 @@ export async function runPassesGate(options: PassesGateOptions): Promise<void> {
   // 检测测试命令
   let testCommand = options.testCommand;
   if (!testCommand) {
-    testCommand = await detectTestCommand(projectPath);
+    testCommand = await detectTestCommand(projectPath) || 'npm test';
   }
 
   if (!testCommand) {

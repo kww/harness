@@ -1,39 +1,23 @@
 /**
- * 预设导出入口
+ * 预设导出
  */
 
-import type { IronLawConfig } from '../types';
+import { STRICT_PRESET } from './strict';
+import { STANDARD_PRESET } from './standard';
+import { RELAXED_PRESET } from './relaxed';
+import type { IronLawConfig } from '../types/iron-law';
 
-export { STRICT_PRESET } from './strict';
-export { STANDARD_PRESET } from './standard';
-export { RELAXED_PRESET } from './relaxed';
+export const PRESETS: Record<string, IronLawConfig> = {
+  strict: STRICT_PRESET,
+  standard: STANDARD_PRESET,
+  relaxed: RELAXED_PRESET,
+};
 
-/**
- * 预设类型
- */
-export type PresetName = 'strict' | 'standard' | 'relaxed';
+export { STRICT_PRESET, STANDARD_PRESET, RELAXED_PRESET };
 
 /**
  * 获取预设配置
  */
-export function getPreset(name: PresetName): IronLawConfig {
-  switch (name) {
-    case 'strict':
-      return (await import('./strict')).STRICT_PRESET;
-    case 'standard':
-      return (await import('./standard')).STANDARD_PRESET;
-    case 'relaxed':
-      return (await import('./relaxed')).RELAXED_PRESET;
-    default:
-      throw new Error(`Unknown preset: ${name}`);
-  }
+export function getPreset(name: string): IronLawConfig {
+  return PRESETS[name] || STANDARD_PRESET;
 }
-
-/**
- * 预设列表
- */
-export const PRESETS: Record<PresetName, IronLawConfig> = {
-  strict: null as any, // 延迟加载
-  standard: null as any,
-  relaxed: null as any,
-};

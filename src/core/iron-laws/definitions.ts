@@ -4,7 +4,10 @@
  * 所有内置的铁律规则
  */
 
-import type { IronLaw, IronLawTrigger } from '../types/iron-law';
+import type { IronLaw, IronLawTrigger, IronLawViolationError as IronLawViolationErrorClass } from '../../types/iron-law';
+
+// 导出 IronLawViolationError 类
+export { IronLawViolationError } from '../../types/iron-law';
 
 /**
  * 所有铁律定义

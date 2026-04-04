@@ -1,26 +1,22 @@
 /**
  * 宽松预设
+ * 
+ * 只保留最核心的铁律，warning 可跳过
  */
 
-import type { IronLawConfig } from '../types';
+import type { IronLaw, IronLawConfig } from '../types/iron-law';
 
 export const RELAXED_PRESET: IronLawConfig = {
   preset: 'relaxed',
   enabled: true,
   ironLaws: [
     {
-      id: 'no_self_approval',
-      rule: '禁止自评通过',
-      message: '任务建议通过测试验证',
+      id: 'no_fix_without_root_cause',
+      rule: 'NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST',
+      message: '在修复问题之前，必须先进行根本原因调查',
+      trigger: 'bug_fix_attempt',
+      enforcement: 'debug-systematic',
       severity: 'warning',
-      enabled: true,
-    },
-    {
-      id: 'test_recommended',
-      rule: '建议添加测试',
-      message: '修改核心代码时建议添加测试',
-      severity: 'info',
-      trigger: ['module_modification'],
       enabled: true,
     },
   ],

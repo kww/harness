@@ -8,19 +8,19 @@ import { IronLawChecker } from '../core/iron-laws/checker';
 import type { IronLawContext } from '../types/iron-law';
 
 describe('Iron Law Definitions', () => {
-  it('should have 11 iron laws defined', () => {
-    expect(Object.keys(IRON_LAWS)).toHaveLength(11);
+  it('should have 12 iron laws defined', () => {
+    expect(Object.keys(IRON_LAWS)).toHaveLength(12);
   });
 
   it('should find laws by trigger', () => {
     const laws = findLawsByTrigger('bug_fix_attempt');
     expect(laws.length).toBeGreaterThan(0);
-    expect(laws[0].id).toBe('no_fix_without_root_cause');
+    expect(laws[0]?.id).toBe('no_fix_without_root_cause');
   });
 
   it('should get all laws', () => {
     const laws = getAllLaws();
-    expect(laws.length).toBe(11);
+    expect(laws.length).toBe(12);
   });
 
   it('should get single law by id', () => {
@@ -110,10 +110,10 @@ describe('Iron Law Severity', () => {
   });
 
   it('should have error severity for critical laws', () => {
-    expect(IRON_LAWS['no_fix_without_root_cause'].severity).toBe('error');
-    expect(IRON_LAWS['no_completion_without_verification'].severity).toBe('error');
-    expect(IRON_LAWS['no_code_without_test'].severity).toBe('error');
-    expect(IRON_LAWS['no_self_approval'].severity).toBe('error');
-    expect(IRON_LAWS['no_bypass_checkpoint'].severity).toBe('error');
+    expect(IRON_LAWS['no_fix_without_root_cause']?.severity).toBe('error');
+    expect(IRON_LAWS['no_completion_without_verification']?.severity).toBe('error');
+    expect(IRON_LAWS['no_code_without_test']?.severity).toBe('error');
+    expect(IRON_LAWS['no_self_approval']?.severity).toBe('error');
+    expect(IRON_LAWS['no_bypass_checkpoint']?.severity).toBe('error');
   });
 });

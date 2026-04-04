@@ -26,6 +26,20 @@ export interface PassesGateConfig {
 }
 
 /**
+ * 单个测试失败信息
+ */
+export interface TestFailure {
+  /** 测试名称 */
+  name: string;
+  
+  /** 失败消息 */
+  message: string;
+  
+  /** 堆栈信息 */
+  stack?: string;
+}
+
+/**
  * 测试结果
  */
 export interface TaskTestResult {
@@ -51,6 +65,15 @@ export interface TaskTestResult {
     functions?: number;
     statements?: number;
   };
+  
+  /** 失败的测试列表 */
+  failures?: TestFailure[];
+  
+  /** 证据（可选） */
+  evidence?: {
+    type: 'test_output' | 'coverage_report' | 'custom';
+    content: string;
+  };
 }
 
 /**
@@ -64,10 +87,19 @@ export interface PassesGateResult {
   testResults: TaskTestResult[];
   
   /** 通过的测试数量 */
-  passedCount: number;
+  passedTests: number;
   
   /** 失败的测试数量 */
-  failedCount: number;
+  failedTests: number;
+  
+  /** 总测试数量 */
+  totalTests: number;
+  
+  /** 执行时间（毫秒） */
+  duration: number;
+  
+  /** 失败的测试列表 */
+  failures?: TestFailure[];
   
   /** 证据（可选） */
   evidence?: {
