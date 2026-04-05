@@ -21,6 +21,8 @@ export interface InitOptions {
   gitHooks?: boolean;
   /** 是否创建 GitHub Actions */
   githubActions?: boolean;
+  /** 只输出代码片段，不创建文件 */
+  printSnippets?: boolean;
 }
 
 /**
@@ -75,6 +77,12 @@ const PRESETS = {
  * 初始化项目
  */
 export async function init(options: InitOptions): Promise<void> {
+  // 只输出代码片段
+  if (options.printSnippets) {
+    printSnippets();
+    return;
+  }
+
   console.log(chalk.blue('🚀 初始化 harness 配置...'));
 
   const projectPath = options.projectPath || process.cwd();
@@ -149,10 +157,59 @@ export async function init(options: InitOptions): Promise<void> {
   console.log();
   console.log(chalk.gray('下一步:'));
   console.log(chalk.gray('  1. 编辑 .harness/config.yml 自定义配置'));
-  console.log(chalk.gray('  2. 编辑 .harness/checkpoints.yml 添加检查点'));
-  console.log(chalk.gray('  3. 运行 `harness check` 检查铁律'));
-  console.log(chalk.gray('  4. 运行 `harness validate` 验证检查点'));
+  console.log(chalk.gray('  2. 编辑 .harness/custom-constraints.yml 添加项目约束'));
+  console.log(chalk.gray('  3. 正常开发，每次 git commit 会自动检查约束'));
+  console.log(chalk.gray('  4. 运行 harness status 查看状态'));
+  console.log();
+  console.log(chalk.blue('💡 提示: 使用 harness init --print-snippets 查看配置代码片段'));
 }
+
+/**
+ * 输出代码片段
+ */
+function printSnippets(): void {
+  console.log(chalk.blue('📄 Harness 配置代码片段'));
+  console.log();
+  
+  console.log(chalk.yellow('Git pre-commit hook:'));
+  console.log(chalk.gray('添加到 .git/hooks/pre-commit'));
+  console.log();
+  console.log(chalk.cyan(PRE_COMMIT_SNIPPET));
+  
+  console.log(chalk.yellow('GitHub Actions:'));
+  console.log(chalk.gray('添加到 .github/workflows/*.yml 的 jobs 中'));
+  console.log();
+  console.log(chalk.cyan(GITHUB_ACTIONS_SNIPPET));
+  
+  console.log(chalk.blue('💡 提示: 运行 harness init 自动创建配置文件'));
+}
+
+/**
+ * Git pre-commit 代码片段
+ */
+const PRE_COMMIT_SNIPPET = `
+# Harness 约束检查
+npx harness check --staged
+if [ $? -ne 0 ]; then
+  echo "❌ Iron law check failed"
+  exit 1
+fi
+`;
+
+/**
+ * GitHub Actions 代码片段
+ */
+const GITHUB_ACTIONS_SNIPPET = `
+  harness-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - run: npx harness check
+`;
 
 /**
  * 设置 Git hooks
@@ -160,19 +217,29 @@ export async function init(options: InitOptions): Promise<void> {
 async function setupGitHooks(projectPath: string): Promise<void> {
   const gitDir = path.join(projectPath, '.git');
   const hooksDir = path.join(gitDir, 'hooks');
+  const preCommitPath = path.join(hooksDir, 'pre-commit');
 
   try {
     await fs.access(gitDir);
   } catch {
     console.log(chalk.yellow('⚠️  未检测到 Git 仓库，跳过 Git hooks'));
+    console.log(chalk.gray('💡 初始化 Git 后可运行 harness init --print-snippets 查看配置'));
     return;
   }
 
   await fs.mkdir(hooksDir, { recursive: true });
 
-  // pre-commit hook
-  const preCommitPath = path.join(hooksDir, 'pre-commit');
-  const preCommitContent = `#!/bin/sh
+  // 检查 pre-commit 是否已存在
+  try {
+    await fs.access(preCommitPath);
+    // 已存在，输出代码片段
+    console.log(chalk.yellow('⚠️  .git/hooks/pre-commit 已存在'));
+    console.log(chalk.gray('💡 请手动添加以下内容到文件末尾：'));
+    console.log();
+    console.log(chalk.cyan(PRE_COMMIT_SNIPPET));
+  } catch {
+    // 不存在，创建文件
+    const preCommitContent = `#!/bin/sh
 # Harness pre-commit hook
 
 echo "🔍 Running harness checks..."
@@ -186,10 +253,10 @@ fi
 
 echo "✅ All checks passed"
 `;
-
-  await fs.writeFile(preCommitPath, preCommitContent, 'utf-8');
-  await fs.chmod(preCommitPath, 0o755);
-  console.log(chalk.green(`✅ 已创建 pre-commit hook`));
+    await fs.writeFile(preCommitPath, preCommitContent, 'utf-8');
+    await fs.chmod(preCommitPath, 0o755);
+    console.log(chalk.green(`✅ 已创建 .git/hooks/pre-commit`));
+  }
 }
 
 /**
@@ -197,11 +264,25 @@ echo "✅ All checks passed"
  */
 async function setupGitHubActions(projectPath: string, preset: string): Promise<void> {
   const workflowsDir = path.join(projectPath, '.github', 'workflows');
-
-  await fs.mkdir(workflowsDir, { recursive: true });
-
-  // harness-check.yml
   const workflowPath = path.join(workflowsDir, 'harness-check.yml');
+
+  // 检查是否已有 CI 配置
+  const existingFiles = await findCiWorkflows(workflowsDir);
+  
+  if (existingFiles.length > 0) {
+    // 已有 CI 配置，输出代码片段
+    console.log(chalk.yellow('⚠️  检测到已存在的 CI 配置：'));
+    existingFiles.forEach(f => {
+      console.log(chalk.gray(`  - .github/workflows/${f}`));
+    });
+    console.log(chalk.gray('💡 请手动添加以下内容到 jobs 中：'));
+    console.log();
+    console.log(chalk.cyan(GITHUB_ACTIONS_SNIPPET));
+    return;
+  }
+
+  // 没有现有 CI 配置，创建文件
+  await fs.mkdir(workflowsDir, { recursive: true });
   const workflowContent = `name: Harness Check
 
 on:
@@ -236,7 +317,23 @@ jobs:
 `;
 
   await fs.writeFile(workflowPath, workflowContent, 'utf-8');
-  console.log(chalk.green(`✅ 已创建 GitHub Action: harness-check.yml`));
+  console.log(chalk.green(`✅ 已创建 .github/workflows/harness-check.yml`));
+}
+
+/**
+ * 查找已存在的 CI 工作流文件
+ */
+async function findCiWorkflows(workflowsDir: string): Promise<string[]> {
+  try {
+    await fs.access(workflowsDir);
+    const files = await fs.readdir(workflowsDir);
+    // 过滤出可能是 CI 配置的文件
+    return files.filter(f => 
+      f.endsWith('.yml') || f.endsWith('.yaml')
+    );
+  } catch {
+    return [];
+  }
 }
 
 /**

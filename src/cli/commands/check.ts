@@ -5,6 +5,8 @@
  */
 
 import chalk from 'chalk';
+import * as fs from 'fs';
+import * as path from 'path';
 import { constraintChecker } from '../../core/constraints/checker';
 import { getAllConstraints, IRON_LAWS, GUIDELINES, TIPS } from '../../core/constraints/definitions';
 import { ProjectConfigLoader } from '../../core/project-config-loader';
@@ -159,6 +161,83 @@ export async function check(options: CheckOptions): Promise<void> {
 
   console.log();
   console.log(chalk.green('✅ 约束检查通过'));
+  
+  // 智能提示
+  const hint = await getSmartHint(projectPath);
+  if (hint) {
+    console.log();
+    console.log(chalk.gray('────────────────────────────────────'));
+    console.log(hint);
+    console.log(chalk.gray('────────────────────────────────────'));
+  }
+}
+
+/**
+ * 智能提示：检查是否需要提示用户下一步操作
+ */
+async function getSmartHint(projectPath: string): Promise<string | null> {
+  const tracesPath = path.join(projectPath, '.harness', 'traces', 'execution.log');
+  const statePath = path.join(projectPath, '.harness', '.state.json');
+  
+  // 检查 trace 文件是否存在
+  if (!fs.existsSync(tracesPath)) {
+    return null;
+  }
+  
+  // 读取 trace 记录数
+  const tracesContent = fs.readFileSync(tracesPath, 'utf-8');
+  const lines = tracesContent.trim().split('\n').filter(Boolean);
+  const traceCount = lines.length;
+  
+  // 读取状态
+  let state: { 
+    shownHints?: string[];
+    lastStatusRun?: string;
+    lastDiagnoseRun?: string;
+  } = {};
+  if (fs.existsSync(statePath)) {
+    state = JSON.parse(fs.readFileSync(statePath, 'utf-8'));
+  }
+  state.shownHints = state.shownHints || [];
+  
+  const hints: string[] = [];
+  
+  // 条件 1: 记录数首次达到 50
+  if (traceCount >= 50 && !state.shownHints.includes('trace_50')) {
+    hints.push('📊 记录已足够，运行 harness status 查看统计');
+    state.shownHints.push('trace_50');
+  }
+  
+  // 条件 2: 记录数达到 100 且从未运行过诊断
+  if (traceCount >= 100 && !state.lastDiagnoseRun && !state.shownHints.includes('diagnose_suggest')) {
+    hints.push('💡 数据充足，建议运行 harness diagnose 查看诊断');
+    state.shownHints.push('diagnose_suggest');
+  }
+  
+  // 条件 3: 检查异常趋势（简单检查绕过率）
+  const bypassCount = lines.filter(line => {
+    try {
+      const trace = JSON.parse(line);
+      return trace.result === 'bypassed';
+    } catch {
+      return false;
+    }
+  }).length;
+  
+  const bypassRate = traceCount > 10 ? bypassCount / traceCount : 0;
+  if (bypassRate > 0.3 && !state.shownHints.includes('high_bypass')) {
+    hints.push('⚠️ 发现异常趋势，建议运行 harness status 查看详情');
+    state.shownHints.push('high_bypass');
+  }
+  
+  // 保存状态
+  if (hints.length > 0) {
+    fs.mkdirSync(path.dirname(statePath), { recursive: true });
+    fs.writeFileSync(statePath, JSON.stringify(state, null, 2));
+    return hints.join('\n');
+  }
+  
+  return null;
 }
 
 /**

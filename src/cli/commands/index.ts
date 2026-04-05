@@ -10,3 +10,5 @@ export { report, type ReportOptions } from './report';
 export { tracesCommand } from './traces';
 export { diagnoseCommand } from './diagnose';
 export { proposeCommand } from './propose';
+export { status, type StatusOptions } from './status';
+export { flow, type FlowOptions } from './flow';

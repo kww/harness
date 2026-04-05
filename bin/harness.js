@@ -16,7 +16,9 @@ const {
   report,
   tracesCommand,
   diagnoseCommand,
-  proposeCommand
+  proposeCommand,
+  status,
+  flow
 } = require('../dist/cli/commands/index');
 
 const program = new Command();
@@ -93,6 +95,7 @@ program
   .option('--project-path <path>', '项目路径')
   .option('--no-git-hooks', '不创建 Git hooks')
   .option('--no-github-actions', '不创建 GitHub Actions')
+  .option('--print-snippets', '只输出代码片段，不创建文件')
   .action(async (options) => {
     await init(options);
   });
@@ -175,6 +178,44 @@ program
       accept: options.accept,
       reject: options.reject,
       comment: options.comment,
+    });
+  });
+
+// ========================================
+// harness status
+// ========================================
+program
+  .command('status')
+  .description('显示 Harness 状态、统计、异常检测')
+  .option('-p, --project-path <path>', '项目路径')
+  .option('-d, --detail', '显示详细信息', false)
+  .option('-a, --anomalies', '只显示异常', false)
+  .option('--hours <n>', '分析最近 N 小时', '24')
+  .action(async (options) => {
+    await status({
+      projectPath: options.projectPath,
+      detail: options.detail,
+      anomalies: options.anomalies,
+      hours: parseInt(options.hours, 10),
+    });
+  });
+
+// ========================================
+// harness flow
+// ========================================
+program
+  .command('flow')
+  .description('一键执行诊断 + 提案流程')
+  .option('-p, --project-path <path>', '项目路径')
+  .option('--from <step>', '从哪个步骤开始 (analyze/diagnose/propose)')
+  .option('--auto-apply', '自动应用低风险提案', false)
+  .option('--hours <n>', '分析最近 N 小时', '24')
+  .action(async (options) => {
+    await flow({
+      projectPath: options.projectPath,
+      from: options.from,
+      autoApply: options.autoApply,
+      hours: parseInt(options.hours, 10),
     });
   });
 
