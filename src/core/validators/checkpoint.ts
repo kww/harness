@@ -25,6 +25,25 @@ const execAsync = promisify(exec);
 export class CheckpointValidator {
   private static instance: CheckpointValidator;
 
+  /**
+   * 支持的检查类型列表
+   */
+  private static readonly SUPPORTED_CHECK_TYPES: CheckType[] = [
+    'file_exists',
+    'file_not_empty',
+    'file_contains',
+    'file_not_contains',
+    'command_success',
+    'command_output',
+    'output_contains',
+    'output_not_contains',
+    'output_matches',
+    'json_path',
+    'http_status',
+    'http_body',
+    'custom',
+  ];
+
   private constructor() {}
 
   static getInstance(): CheckpointValidator {
@@ -32,6 +51,13 @@ export class CheckpointValidator {
       CheckpointValidator.instance = new CheckpointValidator();
     }
     return CheckpointValidator.instance;
+  }
+
+  /**
+   * 获取支持的检查类型
+   */
+  getSupportedCheckTypes(): CheckType[] {
+    return [...CheckpointValidator.SUPPORTED_CHECK_TYPES];
   }
 
   /**
@@ -78,6 +104,8 @@ export class CheckpointValidator {
           return await this.checkFileNotEmpty(check, context);
         case 'file_contains':
           return await this.checkFileContains(check, context);
+        case 'file_not_contains':
+          return await this.checkFileNotContains(check, context);
         case 'command_success':
           return await this.checkCommandSuccess(check, context);
         case 'command_output':
@@ -184,6 +212,35 @@ export class CheckpointValidator {
       message: contains ? `文件包含内容: ${content}` : `文件不包含内容: ${content}`,
       actual: contains,
       expected: true,
+    };
+  }
+
+  /**
+   * 检查文件不包含内容
+   */
+  private async checkFileNotContains(check: CheckpointCheck, context: CheckpointContext): Promise<CheckResult> {
+    const filePath = this.resolvePath(check.config.path || '', context.workdir);
+    const content = check.config.content || '';
+
+    if (!fs.existsSync(filePath)) {
+      return {
+        checkId: check.id,
+        passed: false,
+        message: `文件不存在: ${filePath}`,
+        actual: null,
+        expected: `不包含: ${content}`,
+      };
+    }
+
+    const fileContent = fs.readFileSync(filePath, 'utf-8');
+    const notContains = !fileContent.includes(content);
+
+    return {
+      checkId: check.id,
+      passed: notContains,
+      message: notContains ? `文件不包含内容: ${content}` : `文件包含内容: ${content}`,
+      actual: !notContains,
+      expected: false,
     };
   }
 
