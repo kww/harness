@@ -1,119 +1,134 @@
 /**
- * 铁律系统测试
+ * 约束系统测试
  */
 
 import { describe, it, expect } from '@jest/globals';
-import { IRON_LAWS, findLawsByTrigger, getAllLaws, getLaw } from '../core/iron-laws/definitions';
-import { IronLawChecker } from '../core/iron-laws/checker';
-import type { IronLawContext } from '../types/iron-law';
+import { 
+  IRON_LAWS, 
+  GUIDELINES, 
+  TIPS, 
+  getAllConstraints, 
+  findConstraintsByTrigger, 
+  getConstraint 
+} from '../core/constraints/definitions';
+import { constraintChecker } from '../core/constraints/checker';
+import type { ConstraintContext } from '../types/constraint';
 
-describe('Iron Law Definitions', () => {
-  it('should have 14 iron laws defined', () => {
-    expect(Object.keys(IRON_LAWS)).toHaveLength(14);
+describe('Constraint System', () => {
+  describe('Iron Laws', () => {
+    it('should have 4 iron laws defined', () => {
+      expect(Object.keys(IRON_LAWS)).toHaveLength(4);
+    });
+
+    it('should have no exceptions for iron laws', () => {
+      Object.values(IRON_LAWS).forEach(law => {
+        expect(law.exceptions).toBeUndefined();
+      });
+    });
   });
 
-  it('should find laws by trigger', () => {
-    const laws = findLawsByTrigger('bug_fix_attempt');
-    expect(laws.length).toBeGreaterThan(0);
-    expect(laws[0]?.id).toBe('no_fix_without_root_cause');
+  describe('Guidelines', () => {
+    it('should have 9 guidelines defined', () => {
+      expect(Object.keys(GUIDELINES)).toHaveLength(9);
+    });
+
+    it('should have exceptions for some guidelines', () => {
+      const withExceptions = Object.values(GUIDELINES).filter(g => g.exceptions && g.exceptions.length > 0);
+      expect(withExceptions.length).toBeGreaterThan(0);
+    });
   });
 
-  it('should get all laws', () => {
-    const laws = getAllLaws();
-    expect(laws.length).toBe(14);  // 14 条内置铁律
+  describe('Tips', () => {
+    it('should have 2 tips defined', () => {
+      expect(Object.keys(TIPS)).toHaveLength(2);
+    });
   });
 
-  it('should get single law by id', () => {
-    const law = getLaw('no_fix_without_root_cause');
-    expect(law).toBeDefined();
-    expect(law?.id).toBe('no_fix_without_root_cause');
-    expect(law?.severity).toBe('error');
-  });
+  describe('Helper Functions', () => {
+    it('should get all constraints', () => {
+      const all = getAllConstraints();
+      expect(all.length).toBe(15); // 4 + 9 + 2
+    });
 
-  it('should return undefined for unknown law', () => {
-    const law = getLaw('unknown_law');
-    expect(law).toBeUndefined();
+    it('should find constraints by trigger', () => {
+      const constraints = findConstraintsByTrigger('bug_fix_attempt');
+      expect(constraints.length).toBeGreaterThan(0);
+    });
+
+    it('should get single constraint by id', () => {
+      const constraint = getConstraint('no_fix_without_root_cause');
+      expect(constraint).toBeDefined();
+      expect(constraint?.level).toBe('guideline');
+    });
+
+    it('should return undefined for unknown constraint', () => {
+      const constraint = getConstraint('unknown_constraint');
+      expect(constraint).toBeUndefined();
+    });
   });
 });
 
-describe('Iron Law Checker', () => {
+describe('Constraint Checker', () => {
   it('should return singleton instance', () => {
-    const instance1 = IronLawChecker.getInstance();
-    const instance2 = IronLawChecker.getInstance();
-    expect(instance1).toBe(instance2);
+    const instance1 = constraintChecker;
+    expect(instance1).toBeDefined();
   });
 
-  it('should find applicable laws for context', () => {
-    const checker = IronLawChecker.getInstance();
-    const context: IronLawContext = {
+  it('should find applicable constraints for context', () => {
+    const context: ConstraintContext = {
       operation: 'bug_fix_attempt',
     };
 
-    const laws = checker.findApplicableLaws(context);
-    expect(laws).toContain('no_fix_without_root_cause');
+    const result = constraintChecker.findApplicableConstraints(context);
+    expect(result.ironLaws.length + result.guidelines.length + result.tips.length).toBeGreaterThan(0);
   });
 
-  it('should check iron law', async () => {
-    const checker = IronLawChecker.getInstance();
-
-    // 检查未满足前置条件的情况
-    const result = await checker.check('no_fix_without_root_cause', {
+  it('should check constraint', async () => {
+    const context: ConstraintContext = {
       operation: 'bug_fix_attempt',
       hasRootCauseInvestigation: false,
-    });
+    };
 
+    const result = await constraintChecker.check(GUIDELINES['no_fix_without_root_cause'], context);
     expect(result.satisfied).toBe(false);
-    expect(result.law?.id).toBe('no_fix_without_root_cause');
   });
 
-  it('should check iron law with satisfied precondition', async () => {
-    const checker = IronLawChecker.getInstance();
-
-    // 检查满足前置条件的情况
-    const result = await checker.check('no_fix_without_root_cause', {
+  it('should check constraint with satisfied precondition', async () => {
+    const context: ConstraintContext = {
       operation: 'bug_fix_attempt',
       hasRootCauseInvestigation: true,
-    });
+    };
 
+    const result = await constraintChecker.check(GUIDELINES['no_fix_without_root_cause'], context);
     expect(result.satisfied).toBe(true);
   });
 
-  it('should return error for unknown law', async () => {
-    const checker = IronLawChecker.getInstance();
-
-    const result = await checker.check('unknown_law', {
-      operation: 'bug_fix_attempt',
-    });
-
-    expect(result.satisfied).toBe(false);
-    expect(result.message).toContain('未知的铁律');
-  });
-
-  it('should check all iron laws', async () => {
-    const checker = IronLawChecker.getInstance();
-    const context: IronLawContext = {
+  it('should check all constraints', async () => {
+    const context: ConstraintContext = {
       operation: 'code_implementation',
     };
 
-    const results = await checker.checkAll(context);
-    expect(results.length).toBeGreaterThan(0);
+    const result = await constraintChecker.checkConstraints(context);
+    expect(result.ironLaws.length + result.guidelines.length + result.tips.length).toBeGreaterThan(0);
   });
 });
 
-describe('Iron Law Severity', () => {
-  it('should have correct severity levels', () => {
-    const errorLaws = Object.values(IRON_LAWS).filter(l => l.severity === 'error');
-    const warningLaws = Object.values(IRON_LAWS).filter(l => l.severity === 'warning');
-
-    expect(errorLaws.length).toBeGreaterThan(0);
-    expect(warningLaws.length).toBeGreaterThan(0);
+describe('Constraint Levels', () => {
+  it('should have correct level for iron laws', () => {
+    Object.values(IRON_LAWS).forEach(law => {
+      expect(law.level).toBe('iron_law');
+    });
   });
 
-  it('should have error severity for critical laws', () => {
-    expect(IRON_LAWS['no_fix_without_root_cause']?.severity).toBe('error');
-    expect(IRON_LAWS['no_completion_without_verification']?.severity).toBe('error');
-    expect(IRON_LAWS['no_code_without_test']?.severity).toBe('error');
-    expect(IRON_LAWS['no_self_approval']?.severity).toBe('error');
-    expect(IRON_LAWS['no_bypass_checkpoint']?.severity).toBe('error');
+  it('should have correct level for guidelines', () => {
+    Object.values(GUIDELINES).forEach(guideline => {
+      expect(guideline.level).toBe('guideline');
+    });
+  });
+
+  it('should have correct level for tips', () => {
+    Object.values(TIPS).forEach(tip => {
+      expect(tip.level).toBe('tip');
+    });
   });
 });
