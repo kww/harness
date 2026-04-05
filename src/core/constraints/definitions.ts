@@ -201,7 +201,7 @@ export const GUIDELINES: Record<string, Constraint> = {
 
   /**
    * 复用检查优先
-   * 例外：紧急情况
+   * 例外：紧急修复、hotfix、安全补丁
    */
   no_creation_without_reuse_check: {
     id: 'no_creation_without_reuse_check',
@@ -228,7 +228,10 @@ export const GUIDELINES: Record<string, Constraint> = {
 1. 直接复用现有能力
 2. 扩展现有能力
 3. 组合多个现有能力
-4. 创建新能力`,
+4. 创建新能力
+
+例外情况下可跳过，但必须记录跳过原因。`,
+    exceptions: ['emergency_fix', 'hotfix', 'security_patch'],
   },
 
   /**
