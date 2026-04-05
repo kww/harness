@@ -10,13 +10,15 @@
 
 | 功能 | 说明 |
 |------|------|
-| **铁律系统** | 13 条内置铁律，违规则阻止操作 |
+| **铁律系统** | 16 条内置约束（4 Iron Laws + 10 Guidelines + 2 Tips） |
 | **检查点验证** | 验证工作流步骤的结果是否符合预期 |
 | **测试门控** | 禁止自评通过，必须通过真实测试 |
 | **Session 管理** | 启动检查点 + 结束状态管理 |
 | **预设系统** | 提供 strict/standard/relaxed 三种预设 |
 | **Execution Trace** | 轻量记录约束检查，异常检测，诊断系统（v0.3+） |
 | **项目级自定义约束** | 扩展/覆盖内置约束，无需 fork（v0.4+） |
+| **智能提示** | check 后根据条件提示下一步操作（v0.6+） |
+| **一键流程** | harness flow 一键执行诊断+提案（v0.6+） |
 | **CLI 工具** | 命令行工具执行检查 |
 
 ## 安装
@@ -46,11 +48,26 @@ npx harness init --preset standard
 # 初始化项目配置
 harness init --preset standard
 
+# 输出配置代码片段（不创建文件）
+harness init --print-snippets
+
 # 检查铁律
 harness check
 
 # 列出所有铁律
 harness check --list
+
+# 查看状态（统计、异常、建议）
+harness status
+
+# 查看详细状态
+harness status --detail
+
+# 只显示异常
+harness status --anomalies
+
+# 一键执行诊断+提案流程
+harness flow
 
 # 验证检查点
 harness validate
