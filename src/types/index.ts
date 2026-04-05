@@ -2,7 +2,9 @@
  * 类型导出
  */
 
-export * from './iron-law';
+// 约束类型（三层体系）
+export * from './constraint';
+
 export * from './checkpoint';
 export * from './passes-gate';
 export * from './cso';

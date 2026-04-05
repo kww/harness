@@ -1,13 +1,13 @@
 /**
  * harness check 命令
  * 
- * 检查铁律是否满足
+ * 检查约束是否满足（三层：Iron Laws / Guidelines / Tips）
  */
 
 import chalk from 'chalk';
-import { IronLawChecker } from '../../core/iron-laws/checker';
-import { getAllLaws } from '../../core/iron-laws/definitions';
-import type { IronLawTrigger, IronLawContext, IronLawResult } from '../../types/iron-law';
+import { constraintChecker } from '../../core/constraints/checker';
+import { getAllConstraints, IRON_LAWS, GUIDELINES, TIPS } from '../../core/constraints/definitions';
+import type { ConstraintTrigger, ConstraintContext, ConstraintResult } from '../../types/constraint';
 
 export interface CheckOptions {
   /** 预设名称 */
@@ -15,7 +15,7 @@ export interface CheckOptions {
   /** 是否只检查暂存文件 */
   staged: boolean;
   /** 触发条件 */
-  trigger?: IronLawTrigger;
+  trigger?: ConstraintTrigger;
   /** 项目路径 */
   projectPath?: string;
 }
@@ -40,7 +40,7 @@ async function getChangedFiles(staged: boolean): Promise<string[]> {
 /**
  * 检测触发条件
  */
-function detectTrigger(changedFiles: string[], options: CheckOptions): IronLawTrigger {
+function detectTrigger(changedFiles: string[], options: CheckOptions): ConstraintTrigger {
   // 如果指定了触发条件，直接使用
   if (options.trigger) {
     return options.trigger;
@@ -68,14 +68,11 @@ function detectTrigger(changedFiles: string[], options: CheckOptions): IronLawTr
 }
 
 /**
- * 执行铁律检查
+ * 执行约束检查
  */
 export async function check(options: CheckOptions): Promise<void> {
-  console.log(chalk.blue('🔍 检查铁律...'));
+  console.log(chalk.blue('🔍 检查约束...'));
   console.log(chalk.gray(`预设: ${options.preset}`));
-
-  const checker = IronLawChecker.getInstance();
-  const allLaws = getAllLaws();
 
   // 获取变更文件
   const changedFiles = await getChangedFiles(options.staged);
@@ -88,7 +85,7 @@ export async function check(options: CheckOptions): Promise<void> {
   console.log(chalk.gray(`触发条件: ${trigger}`));
 
   // 构建上下文
-  const context: IronLawContext = {
+  const context: ConstraintContext = {
     operation: trigger,
     projectPath: options.projectPath || process.cwd(),
     changedFiles,
@@ -99,42 +96,22 @@ export async function check(options: CheckOptions): Promise<void> {
     hasReuseCheck: false, // TODO: 检查是否有复用检查
   };
 
-  // 执行检查
-  const results: IronLawResult[] = await checker.checkAll(context);
-
-  // 统计结果
-  const passed = results.filter(r => r.satisfied);
-  const violations = results.filter(r => !r.satisfied);
-  const errors = violations.filter(r => r.law?.severity === 'error');
-  const warnings = violations.filter(r => r.law?.severity === 'warning');
+  // 执行三层检查
+  const result = await constraintChecker.checkConstraints(context);
 
   // 输出结果
   console.log();
   
-  if (passed.length > 0) {
-    console.log(chalk.green(`✅ 通过: ${passed.length} 条`));
-    passed.forEach(r => {
-      if (r.law) {
-        console.log(chalk.gray(`   - ${r.law.id}`));
-      }
-    });
-  }
-
-  if (warnings.length > 0) {
-    console.log(chalk.yellow(`⚠️  警告: ${warnings.length} 条`));
-    warnings.forEach(r => {
-      if (r.law) {
-        console.log(chalk.yellow(`   - ${r.law.id}: ${r.law.message}`));
-      }
-    });
-  }
-
-  if (errors.length > 0) {
-    console.log(chalk.red(`❌ 违规: ${errors.length} 条`));
-    errors.forEach(r => {
-      if (r.law) {
-        console.log(chalk.red(`   - ${r.law.id}: ${r.law.message}`));
-        console.log(chalk.red(`     ${r.law.rule}`));
+  // Iron Laws
+  const ironLawViolations = result.ironLaws.filter(r => !r.satisfied);
+  if (ironLawViolations.length === 0 && result.ironLaws.length > 0) {
+    console.log(chalk.green(`✅ 铁律: 全部通过 (${result.ironLaws.length} 条)`));
+  } else if (ironLawViolations.length > 0) {
+    console.log(chalk.red(`❌ 铁律违规: ${ironLawViolations.length} 条`));
+    ironLawViolations.forEach(r => {
+      if (r.constraint) {
+        console.log(chalk.red(`   - ${r.constraint.id}: ${r.constraint.message}`));
+        console.log(chalk.red(`     ${r.constraint.rule}`));
       }
     });
     console.log();
@@ -142,23 +119,66 @@ export async function check(options: CheckOptions): Promise<void> {
     process.exit(1);
   }
 
+  // Guidelines
+  if (result.warningCount > 0) {
+    console.log(chalk.yellow(`⚠️  指导原则警告: ${result.warningCount} 条`));
+    result.guidelines.filter(r => !r.satisfied).forEach(r => {
+      if (r.constraint) {
+        console.log(chalk.yellow(`   - ${r.constraint.id}: ${r.constraint.message}`));
+      }
+    });
+  } else if (result.guidelines.length > 0) {
+    const passedGuidelines = result.guidelines.filter(r => r.satisfied).length;
+    console.log(chalk.green(`✅ 指导原则: ${passedGuidelines}/${result.guidelines.length} 通过`));
+  }
+
+  // Tips
+  if (result.tipCount > 0) {
+    console.log(chalk.blue(`💡 提示: ${result.tipCount} 条`));
+    result.tips.filter(r => !r.satisfied).forEach(r => {
+      if (r.constraint) {
+        console.log(chalk.blue(`   - ${r.constraint.id}: ${r.constraint.message}`));
+      }
+    });
+  }
+
   console.log();
-  console.log(chalk.green('✅ 所有铁律检查通过'));
+  console.log(chalk.green('✅ 约束检查通过'));
 }
 
 /**
- * 列出所有铁律
+ * 列出所有约束
  */
 export function listLaws(): void {
-  const laws = getAllLaws();
+  console.log(chalk.blue('\n📜 所有约束:\n'));
 
-  console.log(chalk.blue('\n📜 所有铁律:\n'));
+  // Iron Laws
+  console.log(chalk.red('🔴 铁律 (Iron Laws) - 绝对禁止，无例外:\n'));
+  Object.values(IRON_LAWS).forEach(constraint => {
+    console.log(chalk.red(`  ${constraint.id}`));
+    console.log(chalk.gray(`    ${constraint.rule}`));
+    console.log(chalk.gray(`    ${constraint.message}`));
+    console.log();
+  });
 
-  laws.forEach(law => {
-    const icon = law.severity === 'error' ? '🔴' : law.severity === 'warning' ? '🟡' : '🔵';
-    console.log(`${icon} ${chalk.bold(law.id)}`);
-    console.log(chalk.gray(`   ${law.rule}`));
-    console.log(chalk.gray(`   ${law.message}`));
+  // Guidelines
+  console.log(chalk.yellow('🟡 指导原则 (Guidelines) - 优先建议，有例外:\n'));
+  Object.values(GUIDELINES).forEach(constraint => {
+    console.log(chalk.yellow(`  ${constraint.id}`));
+    console.log(chalk.gray(`    ${constraint.rule}`));
+    console.log(chalk.gray(`    ${constraint.message}`));
+    if (constraint.exceptions && constraint.exceptions.length > 0) {
+      console.log(chalk.gray(`    例外: ${constraint.exceptions.join(', ')}`));
+    }
+    console.log();
+  });
+
+  // Tips
+  console.log(chalk.blue('🔵 提示 (Tips) - 信息性，可忽略:\n'));
+  Object.values(TIPS).forEach(constraint => {
+    console.log(chalk.blue(`  ${constraint.id}`));
+    console.log(chalk.gray(`    ${constraint.rule}`));
+    console.log(chalk.gray(`    ${constraint.message}`));
     console.log();
   });
 }

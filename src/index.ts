@@ -2,6 +2,11 @@
  * @dommaker/harness - 主入口
  * 
  * 通用工程约束框架
+ * 
+ * 三层约束体系：
+ * - Iron Laws：绝对禁止，无例外
+ * - Guidelines：优先建议，有例外
+ * - Tips：信息性提示，可忽略
  */
 
 // ========================================
@@ -23,23 +28,39 @@ export * from './presets';
 // 便捷 API
 // ========================================
 
-import { IronLawChecker } from './core/iron-laws/checker';
-import type { IronLawContext, IronLawResult } from './types/iron-law';
+import { constraintChecker } from './core/constraints/checker';
+import type { ConstraintContext, ConstraintCheckResult, ConstraintResult } from './types/constraint';
+// 向后兼容
+import type { IronLawContext, IronLawResult } from './types/constraint';
 
 /**
- * 检查铁律
+ * 检查约束（三层）
+ */
+export async function checkConstraints(
+  context: ConstraintContext
+): Promise<ConstraintCheckResult> {
+  return constraintChecker.checkConstraints(context);
+}
+
+/**
+ * 执行前检查（仅 Iron Laws）
+ */
+export async function checkBeforeExecution(
+  context: ConstraintContext
+): Promise<void> {
+  return constraintChecker.beforeExecution(context);
+}
+
+// ========================================
+// 向后兼容 API
+// ========================================
+
+/**
+ * @deprecated 使用 checkConstraints 代替
  */
 export async function checkIronLaws(
   context: IronLawContext
 ): Promise<IronLawResult[]> {
-  return IronLawChecker.getInstance().checkAll(context);
-}
-
-/**
- * 执行前检查铁律
- */
-export async function checkBeforeExecution(
-  context: IronLawContext
-): Promise<void> {
-  return IronLawChecker.getInstance().beforeExecution(context);
+  const result = await constraintChecker.checkConstraints(context);
+  return [...result.ironLaws, ...result.guidelines, ...result.tips] as IronLawResult[];
 }
