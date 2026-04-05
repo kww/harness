@@ -7,14 +7,24 @@
  */
 
 const { Command } = require('commander');
-const { check, listLaws, validate, runPassesGate, init, report } = require('../dist/cli/commands/index');
+const { 
+  check, 
+  listLaws, 
+  validate, 
+  runPassesGate, 
+  init, 
+  report,
+  tracesCommand,
+  diagnoseCommand,
+  proposeCommand
+} = require('../dist/cli/commands/index');
 
 const program = new Command();
 
 program
   .name('harness')
-  .description('通用工程约束框架 - 铁律系统、检查点验证、测试门控')
-  .version('0.1.0');
+  .description('通用工程约束框架 - 铁律系统、检查点验证、测试门控、执行追踪')
+  .version('0.3.0');
 
 // ========================================
 // harness check
@@ -98,6 +108,74 @@ program
   .option('-p, --project-path <path>', '项目路径')
   .action(async (options) => {
     await report(options);
+  });
+
+// ========================================
+// harness traces
+// ========================================
+program
+  .command('traces [subcommand]')
+  .description('Execution Trace 分析')
+  .option('--hours <n>', '分析最近 N 小时', '1')
+  .option('--constraint <id>', '过滤约束 ID')
+  .option('--format <format>', '输出格式 (json/text)', 'text')
+  .option('--max-age-days <n>', '清理超过 N 天的文件', '30')
+  .action(async (subcommand, options, command) => {
+    const sub = subcommand || 'stats';
+    await tracesCommand(sub, {
+      hours: parseInt(options.hours, 10),
+      constraintId: options.constraint,
+      format: options.format,
+      maxAgeDays: parseInt(options.maxAgeDays, 10),
+    });
+  });
+
+// ========================================
+// harness diagnose
+// ========================================
+program
+  .command('diagnose [subcommand]')
+  .description('约束诊断')
+  .option('--hours <n>', '分析最近 N 小时', '24')
+  .option('--constraint <id>', '过滤约束 ID')
+  .option('--anomaly <id>', '特定异常 ID')
+  .option('--format <format>', '输出格式 (json/text)', 'text')
+  .option('--save', '保存诊断结果', false)
+  .action(async (subcommand, options, command) => {
+    const sub = subcommand || 'list';
+    await diagnoseCommand(sub, {
+      hours: parseInt(options.hours, 10),
+      constraintId: options.constraint,
+      anomalyId: options.anomaly,
+      format: options.format,
+      save: options.save,
+    });
+  });
+
+// ========================================
+// harness propose
+// ========================================
+program
+  .command('propose [subcommand]')
+  .description('约束提案')
+  .option('--diagnosis <id>', '诊断 ID')
+  .option('--status <status>', '过滤状态')
+  .option('--format <format>', '输出格式 (json/text)', 'text')
+  .option('--save', '保存提案', false)
+  .option('--accept', '接受提案', false)
+  .option('--reject', '拒绝提案', false)
+  .option('--comment <text>', '审核意见')
+  .action(async (subcommand, options, command) => {
+    const sub = subcommand || 'list';
+    await proposeCommand(sub, {
+      diagnosisId: options.diagnosis,
+      status: options.status,
+      format: options.format,
+      save: options.save,
+      accept: options.accept,
+      reject: options.reject,
+      comment: options.comment,
+    });
   });
 
 // 解析命令行参数
