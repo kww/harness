@@ -166,12 +166,13 @@ export const IRON_LAWS: Record<string, IronLaw> = {
 
   simplest_solution_first: {
     id: 'simplest_solution_first',
-    rule: 'ALWAYS CHOOSE THE SIMPLEST IMPLEMENTATION PATH',
-    message: '优先使用最简单、最近的数据源，避免过度设计',
+    rule: 'CHECK LOCAL/SIMPLE OPTIONS BEFORE REMOTE/COMPLEX',
+    message: '先检查本地/简单方案，再考虑远程/复杂方案。如有例外需求需说明理由。',
     trigger: ['feature_development', 'module_extension', 'code_implementation'],
     enforcement: 'check-local-first',
     severity: 'warning',
-    description: '在实现功能时，必须检查：1) 是否有本地数据源？2) 是否有更简单的方案？3) 远程查询/复杂架构是否必要？',
+    description: '在实现功能时，必须按顺序检查：\n1) 是否有本地数据源（内存/文件）？\n2) 是否有更简单的方案（更少依赖/更少代码）？\n3) 如需远程查询/复杂架构，必须说明理由。\n\n例外情况（可跳过简单方案）：\n- scalability_required: 需要多实例/分布式部署\n- security_required: 需要加密/鉴权等安全措施\n- performance_required: 本地方案性能不足\n- reliability_required: 需要持久化/高可用',
+    exceptions: ['scalability_required', 'security_required', 'performance_required', 'reliability_required'],
   },
 
   // ========================================

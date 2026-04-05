@@ -44,6 +44,16 @@ export class IronLawChecker {
       };
     }
 
+    // 先检查例外条件
+    if (law.exceptions && this.checkException(law, context)) {
+      return {
+        satisfied: true,
+        law,
+        message: `铁律 ${lawId} 因例外条件被跳过`,
+        checkedAt: new Date(),
+      };
+    }
+
     // 检查是否满足铁律前置条件
     const satisfied = await this.checkPrecondition(law, context);
 
@@ -62,6 +72,35 @@ export class IronLawChecker {
       law,
       checkedAt: new Date(),
     };
+  }
+
+  /**
+   * 检查例外条件是否满足
+   */
+  private checkException(law: IronLaw, context: IronLawContext): boolean {
+    if (!law.exceptions) return false;
+
+    const exceptionReasons: string[] = [];
+
+    for (const exception of law.exceptions) {
+      switch (exception) {
+        case 'scalability_required':
+          if (context.scalabilityRequired) exceptionReasons.push('需要多实例/分布式部署');
+          break;
+        case 'security_required':
+          if (context.securityRequired) exceptionReasons.push('需要加密/鉴权等安全措施');
+          break;
+        case 'performance_required':
+          if (context.performanceRequired) exceptionReasons.push('本地方案性能不足');
+          break;
+        case 'reliability_required':
+          if (context.reliabilityRequired) exceptionReasons.push('需要持久化/高可用');
+          break;
+        // 可扩展其他例外条件
+      }
+    }
+
+    return exceptionReasons.length > 0;
   }
 
   /**

@@ -69,6 +69,9 @@ export interface IronLaw {
   
   /** 是否启用 */
   enabled?: boolean;
+  
+  /** 例外条件（满足这些条件可跳过铁律） */
+  exceptions?: string[];
 }
 
 /**
@@ -140,6 +143,25 @@ export interface IronLawContext {
     canReuse: boolean;
     reuseRecommendation: string;
   };
+  
+  // ========================================
+  // 例外条件（用于跳过简单优先等铁律）
+  // ========================================
+  
+  /** 需要多实例/分布式部署（例外：scalability_required） */
+  scalabilityRequired?: boolean;
+  
+  /** 需要加密/鉴权等安全措施（例外：security_required） */
+  securityRequired?: boolean;
+  
+  /** 本地方案性能不足（例外：performance_required） */
+  performanceRequired?: boolean;
+  
+  /** 需要持久化/高可用（例外：reliability_required） */
+  reliabilityRequired?: boolean;
+  
+  /** 例外理由说明（可选） */
+  exceptionReason?: string;
   
   /** 执行上下文 */
   executionContext?: any;
