@@ -8,3 +8,5 @@ export { runPassesGate, checkCoverage, type PassesGateOptions } from './passes-g
 export { init, type InitOptions } from './init';
 export { report, type ReportOptions } from './report';
 export { tracesCommand } from './traces';
+export { diagnoseCommand } from './diagnose';
+export { proposeCommand } from './propose';

@@ -322,6 +322,21 @@ harness traces anomalies
 
 # JSON 格式输出
 harness traces summary --format json
+
+# 运行诊断
+harness diagnose run --hours 24 --save
+
+# 查看诊断列表
+harness diagnose list
+
+# 生成提案
+harness propose generate --save
+
+# 审核提案
+harness propose review --diagnosis <id> --accept
+
+# 查看实施指导
+harness propose implement --diagnosis <id>
 ```
 
 ### 成本控制

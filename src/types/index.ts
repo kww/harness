@@ -12,6 +12,13 @@ export * from './cso';
 // Trace 类型（Execution Trace 系统）
 export * from './trace';
 
+// 诊断和提案类型（从 monitoring 导入）
+export type { Diagnosis } from '../monitoring/constraint-doctor';
+export type {
+  ConstraintProposal,
+  ProposalReviewResult,
+} from '../monitoring/constraint-evolver';
+
 // Session 类型（排除与 passes-gate 冲突的类型）
 export {
   StartupCheckpoints,
