@@ -34,3 +34,6 @@ export {
 
 // 从 session 导入 DynamicTask，扩展 passes-gate 的定义
 export { DynamicTask as ExtendedDynamicTask, TaskTestResult as ExtendedTaskTestResult } from './session';
+
+// 项目配置类型
+export * from './project-config';

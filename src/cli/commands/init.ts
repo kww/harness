@@ -97,6 +97,9 @@ export async function init(options: InitOptions): Promise<void> {
   // 创建检查点示例
   await createExampleCheckpoint(projectPath);
 
+  // 创建自定义约束示例
+  await createCustomConstraintsExample(projectPath);
+
   // 创建 CAPABILITIES.md（如果不存在）
   const capabilitiesPath = path.join(projectPath, 'CAPABILITIES.md');
   try {
@@ -234,4 +237,73 @@ jobs:
 
   await fs.writeFile(workflowPath, workflowContent, 'utf-8');
   console.log(chalk.green(`✅ 已创建 GitHub Action: harness-check.yml`));
+}
+
+/**
+ * 创建自定义约束示例
+ */
+async function createCustomConstraintsExample(projectPath: string): Promise<void> {
+  const configDir = path.join(projectPath, '.harness');
+  const customConstraintsPath = path.join(configDir, 'custom-constraints.yml');
+
+  // 如果已存在，不覆盖
+  try {
+    await fs.access(customConstraintsPath);
+    console.log(chalk.gray(`custom-constraints.yml 已存在`));
+    return;
+  } catch {
+    // 文件不存在，创建
+  }
+
+  const content = `# 自定义约束配置
+#
+# 此文件定义项目特定的约束，扩展或覆盖 harness 内置约束
+
+# ========================================
+# 自定义约束示例
+# ========================================
+
+custom_constraints:
+  # 示例 1：禁止 console.log
+  # my_project_no_console_log:
+  #   id: my_project_no_console_log
+  #   level: guideline
+  #   rule: "NO CONSOLE.LOG IN PRODUCTION CODE"
+  #   message: "生产代码禁止使用 console.log，请使用 logger 模块"
+  #   trigger: ["code_implementation"]
+  #   description: "使用项目统一的 logger 模块代替 console.log"
+
+  # 示例 2：禁止特定的导入
+  # my_project_no_moment_js:
+  #   id: my_project_no_moment_js
+  #   level: guideline
+  #   rule: "NO MOMENT.JS IMPORTS"
+  #   message: "禁止使用 moment.js，请使用 date-fns 或 dayjs"
+  #   trigger: ["code_implementation"]
+  #   exceptions: ["legacy_migration"]
+
+  # 示例 3：要求特定的文件命名
+  # my_project_component_naming:
+  #   id: my_project_component_naming
+  #   level: tip
+  #   rule: "REACT COMPONENTS SHOULD BE PASCAL CASE"
+  #   message: "React 组件文件名应使用 PascalCase"
+  #   trigger: ["file_creation"]
+
+# ========================================
+# 扩展内置约束的例外
+# ========================================
+
+# 如果需要为内置约束添加项目特定的例外，
+# 可以在 .harness/config.yml 中配置：
+
+# constraints:
+#   no_fix_without_root_cause:
+#     # 添加项目特定的例外
+#     exceptions:
+#       - my_custom_exception
+`;
+
+  await fs.writeFile(customConstraintsPath, content, 'utf-8');
+  console.log(chalk.green(`✅ 已创建自定义约束示例: custom-constraints.yml`));
 }

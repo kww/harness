@@ -19,12 +19,16 @@ import { ConstraintViolationError } from '../../types/constraint';
 import type { ExecutionTrace } from '../../types/trace';
 import { getTraceCollector } from '../../monitoring/traces';
 import { IRON_LAWS, GUIDELINES, TIPS } from './definitions';
+import type { MergedConstraintsConfig } from '../../types/project-config';
 
 /**
  * 约束检查器
  */
 export class ConstraintChecker {
   private static instance: ConstraintChecker;
+
+  /** 自定义约束配置（项目级） */
+  private customConfig: MergedConstraintsConfig | null = null;
 
   private constructor() {}
 
@@ -36,6 +40,35 @@ export class ConstraintChecker {
       ConstraintChecker.instance = new ConstraintChecker();
     }
     return ConstraintChecker.instance;
+  }
+
+  /**
+   * 设置项目级约束配置
+   */
+  setCustomConfig(config: MergedConstraintsConfig): void {
+    this.customConfig = config;
+  }
+
+  /**
+   * 获取当前的约束集合（内置 + 自定义）
+   */
+  getConstraints(): {
+    ironLaws: Record<string, Constraint>;
+    guidelines: Record<string, Constraint>;
+    tips: Record<string, Constraint>;
+  } {
+    if (this.customConfig) {
+      return {
+        ironLaws: this.customConfig.ironLaws,
+        guidelines: this.customConfig.guidelines,
+        tips: this.customConfig.tips,
+      };
+    }
+    return {
+      ironLaws: IRON_LAWS,
+      guidelines: GUIDELINES,
+      tips: TIPS,
+    };
   }
 
   /**
@@ -258,9 +291,10 @@ export class ConstraintChecker {
     tips: Constraint[];
   } {
     const trigger = context.operation;
+    const constraints = this.getConstraints();
 
-    const filterByTrigger = (constraints: Record<string, Constraint>): Constraint[] => {
-      return Object.values(constraints).filter(constraint => {
+    const filterByTrigger = (constraintSet: Record<string, Constraint>): Constraint[] => {
+      return Object.values(constraintSet).filter(constraint => {
         const triggers = Array.isArray(constraint.trigger)
           ? constraint.trigger
           : [constraint.trigger];
@@ -269,9 +303,9 @@ export class ConstraintChecker {
     };
 
     return {
-      ironLaws: filterByTrigger(IRON_LAWS),
-      guidelines: filterByTrigger(GUIDELINES),
-      tips: filterByTrigger(TIPS),
+      ironLaws: filterByTrigger(constraints.ironLaws),
+      guidelines: filterByTrigger(constraints.guidelines),
+      tips: filterByTrigger(constraints.tips),
     };
   }
 
@@ -295,8 +329,11 @@ export class ConstraintChecker {
     // 获取 trace 收集器（可选启用）
     const traceCollector = getTraceCollector();
 
+    // 获取约束集合（内置 + 自定义）
+    const constraints = this.getConstraints();
+
     // 1. 检查 Iron Laws（必须全部通过）
-    for (const constraint of Object.values(IRON_LAWS)) {
+    for (const constraint of Object.values(constraints.ironLaws)) {
       const triggers = Array.isArray(constraint.trigger)
         ? constraint.trigger
         : [constraint.trigger];
@@ -356,7 +393,7 @@ export class ConstraintChecker {
     }
 
     // 3. 检查 Tips（仅记录）
-    for (const constraint of Object.values(TIPS)) {
+    for (const constraint of Object.values(constraints.tips)) {
       const triggers = Array.isArray(constraint.trigger)
         ? constraint.trigger
         : [constraint.trigger];
@@ -393,8 +430,9 @@ export class ConstraintChecker {
    */
   async beforeExecution(context: ConstraintContext): Promise<void> {
     const triggers = Array.isArray(context.operation) ? context.operation : [context.operation];
+    const constraints = this.getConstraints();
 
-    for (const constraint of Object.values(IRON_LAWS)) {
+    for (const constraint of Object.values(constraints.ironLaws)) {
       const constraintTriggers = Array.isArray(constraint.trigger)
         ? constraint.trigger
         : [constraint.trigger];
@@ -422,10 +460,13 @@ export async function checkConstraint(
   constraintId: string,
   context: ConstraintContext
 ): Promise<ConstraintResult> {
+  const checker = ConstraintChecker.getInstance();
+  const constraints = checker.getConstraints();
+
   const constraint =
-    IRON_LAWS[constraintId] ||
-    GUIDELINES[constraintId] ||
-    TIPS[constraintId];
+    constraints.ironLaws[constraintId] ||
+    constraints.guidelines[constraintId] ||
+    constraints.tips[constraintId];
 
   if (!constraint) {
     return {
@@ -437,7 +478,7 @@ export async function checkConstraint(
     };
   }
 
-  return ConstraintChecker.getInstance().check(constraint, context);
+  return checker.check(constraint, context);
 }
 
 /**
