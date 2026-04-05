@@ -84,6 +84,7 @@ export class IronLawChecker {
 
     for (const exception of law.exceptions) {
       switch (exception) {
+        // simplest_solution_first 例外
         case 'scalability_required':
           if (context.scalabilityRequired) exceptionReasons.push('需要多实例/分布式部署');
           break;
@@ -96,7 +97,64 @@ export class IronLawChecker {
         case 'reliability_required':
           if (context.reliabilityRequired) exceptionReasons.push('需要持久化/高可用');
           break;
-        // 可扩展其他例外条件
+        
+        // no_fix_without_root_cause 例外
+        case 'simple_typo':
+          if (context.isSimpleTypo) exceptionReasons.push('简单拼写错误');
+          break;
+        case 'config_value_error':
+          if (context.isConfigValueError) exceptionReasons.push('配置值错误');
+          break;
+        case 'missing_config':
+          if (context.isMissingConfig) exceptionReasons.push('缺少必要配置');
+          break;
+        
+        // no_code_without_test 例外
+        case 'config_file':
+          if (context.isConfigFile) exceptionReasons.push('配置文件');
+          break;
+        case 'type_definition':
+          if (context.isTypeDefinition) exceptionReasons.push('类型定义文件');
+          break;
+        case 'simple_accessor':
+          if (context.isSimpleAccessor) exceptionReasons.push('简单 getter/setter');
+          break;
+        case 'pure_display_component':
+          if (context.isPureDisplayComponent) exceptionReasons.push('纯展示 UI 组件');
+          break;
+        
+        // no_any_type 例外
+        case 'json_parse_result':
+          if (context.isJsonParseResult) exceptionReasons.push('JSON.parse 结果');
+          break;
+        case 'third_party_no_types':
+          if (context.isThirdPartyNoTypes) exceptionReasons.push('第三方库无类型');
+          break;
+        case 'legacy_migration':
+          if (context.isLegacyMigration) exceptionReasons.push('遗留代码迁移');
+          break;
+        
+        // capability_sync 例外
+        case 'internal_refactor':
+          if (context.isInternalRefactor) exceptionReasons.push('内部重构不影响接口');
+          break;
+        case 'bug_fix_only':
+          if (context.isBugFixOnly) exceptionReasons.push('仅 bug fix 不改变功能');
+          break;
+        case 'performance_optimization':
+          if (context.isPerformanceOptimization) exceptionReasons.push('性能优化不改变接口');
+          break;
+        
+        // no_simplification_without_approval 例外
+        case 'redundant_code_cleanup':
+          if (context.isRedundantCodeCleanup) exceptionReasons.push('冗余代码清理');
+          break;
+        case 'same_effect_refactor':
+          if (context.isSameEffectRefactor) exceptionReasons.push('相同效果重构');
+          break;
+        case 'unused_code_removal':
+          if (context.isUnusedCodeRemoval) exceptionReasons.push('未使用代码删除');
+          break;
       }
     }
 

@@ -145,9 +145,10 @@ export interface IronLawContext {
   };
   
   // ========================================
-  // 例外条件（用于跳过简单优先等铁律）
+  // 例外条件（用于跳过铁律）
   // ========================================
   
+  // simplest_solution_first 例外
   /** 需要多实例/分布式部署（例外：scalability_required） */
   scalabilityRequired?: boolean;
   
@@ -159,6 +160,59 @@ export interface IronLawContext {
   
   /** 需要持久化/高可用（例外：reliability_required） */
   reliabilityRequired?: boolean;
+  
+  // no_fix_without_root_cause 例外
+  /** 简单拼写错误（例外：simple_typo） */
+  isSimpleTypo?: boolean;
+  
+  /** 配置值错误（例外：config_value_error） */
+  isConfigValueError?: boolean;
+  
+  /** 缺少必要配置（例外：missing_config） */
+  isMissingConfig?: boolean;
+  
+  // no_code_without_test 例外
+  /** 配置文件（例外：config_file） */
+  isConfigFile?: boolean;
+  
+  /** 类型定义文件（例外：type_definition） */
+  isTypeDefinition?: boolean;
+  
+  /** 简单 getter/setter（例外：simple_accessor） */
+  isSimpleAccessor?: boolean;
+  
+  /** 纯展示 UI 组件（例外：pure_display_component） */
+  isPureDisplayComponent?: boolean;
+  
+  // no_any_type 例外
+  /** JSON.parse 结果（例外：json_parse_result） */
+  isJsonParseResult?: boolean;
+  
+  /** 第三方库无类型（例外：third_party_no_types） */
+  isThirdPartyNoTypes?: boolean;
+  
+  /** 遗留代码迁移（例外：legacy_migration） */
+  isLegacyMigration?: boolean;
+  
+  // capability_sync 例外
+  /** 内部重构不影响接口（例外：internal_refactor） */
+  isInternalRefactor?: boolean;
+  
+  /** 仅 bug fix 不改变功能（例外：bug_fix_only） */
+  isBugFixOnly?: boolean;
+  
+  /** 性能优化不改变接口（例外：performance_optimization） */
+  isPerformanceOptimization?: boolean;
+  
+  // no_simplification_without_approval 例外
+  /** 冗余代码清理（例外：redundant_code_cleanup） */
+  isRedundantCodeCleanup?: boolean;
+  
+  /** 相同效果重构（例外：same_effect_refactor） */
+  isSameEffectRefactor?: boolean;
+  
+  /** 未使用代码删除（例外：unused_code_removal） */
+  isUnusedCodeRemoval?: boolean;
   
   /** 例外理由说明（可选） */
   exceptionReason?: string;
