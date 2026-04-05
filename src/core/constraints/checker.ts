@@ -13,8 +13,11 @@ import type {
   ConstraintResult,
   ConstraintCheckResult,
   ConstraintTrigger,
+  ConstraintLevel,
 } from '../../types/constraint';
 import { ConstraintViolationError } from '../../types/constraint';
+import type { ExecutionTrace } from '../../types/trace';
+import { getTraceCollector } from '../../monitoring/traces';
 import { IRON_LAWS, GUIDELINES, TIPS } from './definitions';
 
 /**
@@ -156,6 +159,22 @@ export class ConstraintChecker {
   }
 
   /**
+   * 根据约束层级获取严重性
+   */
+  private getSeverity(level: ConstraintLevel): 'error' | 'warning' | 'info' {
+    switch (level) {
+      case 'iron_law':
+        return 'error';
+      case 'guideline':
+        return 'warning';
+      case 'tip':
+        return 'info';
+      default:
+        return 'warning';
+    }
+  }
+
+  /**
    * 检查约束前置条件
    */
   private async checkPrecondition(
@@ -273,6 +292,9 @@ export class ConstraintChecker {
       tipCount: 0,
     };
 
+    // 获取 trace 收集器（可选启用）
+    const traceCollector = getTraceCollector();
+
     // 1. 检查 Iron Laws（必须全部通过）
     for (const constraint of Object.values(IRON_LAWS)) {
       const triggers = Array.isArray(constraint.trigger)
@@ -283,6 +305,19 @@ export class ConstraintChecker {
 
       const checkResult = await this.check(constraint, context);
       result.ironLaws.push(checkResult);
+
+      // 记录 trace
+      traceCollector.record({
+        constraintId: constraint.id,
+        level: 'iron_law',
+        timestamp: Date.now(),
+        result: checkResult.satisfied ? 'pass' : 'fail',
+        operation: context.operation,
+        severity: this.getSeverity(constraint.level),
+        exceptionApplied: checkResult.message?.includes('豁免') ? constraint.exceptions?.[0] : undefined,
+        projectPath: context.projectPath,
+        sessionId: context.sessionId,
+      });
 
       if (!checkResult.satisfied) {
         result.passed = false;
@@ -301,6 +336,20 @@ export class ConstraintChecker {
       const checkResult = await this.check(constraint, context);
       result.guidelines.push(checkResult);
 
+      // 记录 trace
+      const severity = this.getSeverity(constraint.level);
+      traceCollector.record({
+        constraintId: constraint.id,
+        level: 'guideline',
+        timestamp: Date.now(),
+        result: checkResult.satisfied ? 'pass' : 'fail',
+        operation: context.operation,
+        severity,
+        exceptionApplied: checkResult.message?.includes('豁免') ? constraint.exceptions?.[0] : undefined,
+        projectPath: context.projectPath,
+        sessionId: context.sessionId,
+      });
+
       if (!checkResult.satisfied) {
         result.warningCount++;
       }
@@ -316,6 +365,18 @@ export class ConstraintChecker {
 
       const checkResult = await this.check(constraint, context);
       result.tips.push(checkResult);
+
+      // 记录 trace
+      traceCollector.record({
+        constraintId: constraint.id,
+        level: 'tip',
+        timestamp: Date.now(),
+        result: checkResult.satisfied ? 'pass' : 'fail',
+        operation: context.operation,
+        severity: this.getSeverity(constraint.level),
+        projectPath: context.projectPath,
+        sessionId: context.sessionId,
+      });
 
       if (!checkResult.satisfied) {
         result.tipCount++;

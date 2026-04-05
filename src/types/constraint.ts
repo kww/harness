@@ -157,6 +157,9 @@ export interface ConstraintContext {
   /** 项目路径 */
   projectPath?: string;
   
+  /** 会话 ID（用于追踪同一会话的多次检查） */
+  sessionId?: string;
+  
   /** 变更的文件列表 */
   changedFiles?: string[];
   

@@ -58,6 +58,13 @@ harness passes-gate
 
 # 生成报告
 harness report
+
+# Trace 分析（Execution Traces）
+harness traces stats              # 查看 trace 文件统计
+harness traces summary            # 查看约束汇总
+harness traces anomalies          # 检测异常模式
+harness traces report             # 生成完整报告
+harness traces clean              # 清理旧 trace 文件
 ```
 
 ### 3. 在 CI 中使用
@@ -216,3 +223,114 @@ npm test
 ## 许可证
 
 MIT © dommaker
+
+---
+
+## Execution Trace 系统（v0.3+）
+
+### 概念
+
+Execution Trace 是约束检查的轻量记录，用于：
+- 统计约束触发频率
+- 检测异常模式（高频绕过、失败率上升）
+- 为 Agent 诊断提供数据基础
+
+### 设计原则
+
+| 原则 | 说明 |
+|------|------|
+| **零 Token 成本** | 记录和统计都不调用 LLM |
+| **轻量记录** | 只记录核心字段，不记录代码片段 |
+| **异步分析** | 统计每小时执行，异常检测每日执行 |
+| **按需诊断** | Agent 仅在检测到异常时才介入 |
+
+### Trace 数据结构
+
+```typescript
+interface ExecutionTrace {
+  constraintId: string;     // 约束 ID
+  level: 'iron_law' | 'guideline' | 'tip';
+  timestamp: number;        // Unix timestamp
+  result: 'pass' | 'fail' | 'bypassed';
+  operation?: string;       // 触发条件
+  exceptionApplied?: string; // 例外类型
+}
+```
+
+### 自动记录
+
+约束检查时自动记录：
+
+```typescript
+import { checkConstraints } from '@dommaker/harness';
+
+// 每次检查都会自动记录 trace
+const result = await checkConstraints(context);
+// Trace 已写入 .harness/traces/execution.log
+```
+
+### Trace 文件位置
+
+```
+.harness/traces/
+├── execution.log           # 当前 trace 文件
+├── execution-2026-04-05.log  # 滚动备份（超出 10MB 时）
+├── summary.json            # 统计汇总
+```
+
+### 统计汇总
+
+每小时自动执行：
+
+```typescript
+import { TraceAnalyzer } from '@dommaker/harness';
+
+const analyzer = new TraceAnalyzer();
+const summaries = analyzer.runHourlySummary();
+
+// 输出：
+// [
+//   { constraintId: 'no_fix_without_root_cause', passRate: 0.7, bypassRate: 0.1 },
+//   { constraintId: 'no_code_without_test', passRate: 0.9, bypassRate: 0 },
+// ]
+```
+
+### 异常检测
+
+每日自动执行：
+
+```typescript
+const anomalies = analyzer.runDailyAnomalyCheck();
+
+// 检测类型：
+// - high_bypass_rate：绕过率 > 30%
+// - rising_fail_rate：失败率上升趋势
+// - exception_overuse：例外使用率 > 40%
+```
+
+### CLI 使用
+
+```bash
+# 查看 trace 文件统计
+harness traces stats
+
+# 查看最近 24 小时的约束汇总
+harness traces summary --hours 24
+
+# 检测异常
+harness traces anomalies
+
+# JSON 格式输出
+harness traces summary --format json
+```
+
+### 成本控制
+
+| 活动 | 频率 | Token 成本 |
+|------|------|:----------:|
+| Trace 记录 | 每次检查 | 0 |
+| 统计汇总 | 每小时 | 0 |
+| 异常检测 | 每日 | 0（未触发）~500（触发） |
+| Agent 诊断 | 按需 | ~2000 |
+
+**对比 Meta-Harness**：百万级 vs 5500/周，成本降低 **180 倍**。

@@ -7,3 +7,4 @@ export { validate, createExampleCheckpoint, type ValidateOptions } from './valid
 export { runPassesGate, checkCoverage, type PassesGateOptions } from './passes-gate';
 export { init, type InitOptions } from './init';
 export { report, type ReportOptions } from './report';
+export { tracesCommand } from './traces';

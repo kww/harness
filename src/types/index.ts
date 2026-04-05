@@ -9,6 +9,9 @@ export * from './checkpoint';
 export * from './passes-gate';
 export * from './cso';
 
+// Trace 类型（Execution Trace 系统）
+export * from './trace';
+
 // Session 类型（排除与 passes-gate 冲突的类型）
 export {
   StartupCheckpoints,
