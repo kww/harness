@@ -7,6 +7,7 @@
 import chalk from 'chalk';
 import { constraintChecker } from '../../core/constraints/checker';
 import { getAllConstraints, IRON_LAWS, GUIDELINES, TIPS } from '../../core/constraints/definitions';
+import { ProjectConfigLoader } from '../../core/project-config-loader';
 import type { ConstraintTrigger, ConstraintContext, ConstraintResult } from '../../types/constraint';
 
 export interface CheckOptions {
@@ -73,6 +74,20 @@ function detectTrigger(changedFiles: string[], options: CheckOptions): Constrain
 export async function check(options: CheckOptions): Promise<void> {
   console.log(chalk.blue('🔍 检查约束...'));
   console.log(chalk.gray(`预设: ${options.preset}`));
+
+  // 加载项目级自定义约束
+  const projectPath = options.projectPath || process.cwd();
+  const configLoader = new ProjectConfigLoader(projectPath);
+  configLoader.load();
+  
+  if (configLoader.hasCustomConfig()) {
+    const merged = configLoader.mergeConstraints();
+    constraintChecker.setCustomConfig(merged);
+    console.log(chalk.gray(`自定义约束: ${merged.custom.length} 条`));
+    if (merged.disabled.length > 0) {
+      console.log(chalk.gray(`已禁用约束: ${merged.disabled.join(', ')}`));
+    }
+  }
 
   // 获取变更文件
   const changedFiles = await getChangedFiles(options.staged);

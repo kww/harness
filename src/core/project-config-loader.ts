@@ -191,6 +191,16 @@ export class ProjectConfigLoader {
     }
     return 'built-in';
   }
+
+  /**
+   * 检查是否有自定义配置
+   */
+  hasCustomConfig(): boolean {
+    return (
+      Object.keys(this.customConstraints).length > 0 ||
+      (this.config.constraints !== undefined && Object.keys(this.config.constraints).length > 0)
+    );
+  }
 }
 
 /**
