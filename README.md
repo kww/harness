@@ -78,12 +78,10 @@ harness passes-gate
 # 生成报告
 harness report
 
-# Trace 分析（Execution Traces）
-harness traces stats              # 查看 trace 文件统计
-harness traces summary            # 查看约束汇总
-harness traces anomalies          # 检测异常模式
-harness traces report             # 生成完整报告
-harness traces clean              # 清理旧 trace 文件
+# [已弃用] 请使用 harness status
+harness traces stats
+harness traces summary
+harness traces anomalies
 ```
 
 ### 3. 在 CI 中使用
@@ -132,23 +130,26 @@ const cleaner = new CleanStateManager();
 const cleanResult = await cleaner.onSessionEnd(workDir, sessionInfo);
 ```
 
-## 内置铁律（13 条）
+## 内置约束（16 条）
 
-| ID | 规则 | 严重性 |
-|---|------|:------:|
-| `no_simplification_without_approval` | 不能擅自简化逻辑 | 🔴 error |
-| `no_fix_without_root_cause` | 修复前必须找到根因 | 🔴 error |
-| `no_completion_without_verification` | 完成必须有验证证据 | 🔴 error |
-| `no_skill_without_test` | 创建技能前必须有测试 | 🟡 warning |
-| `no_code_without_test` | 写代码前必须有测试 | 🔴 error |
-| `no_creation_without_reuse_check` | 创建前必须检查可复用 | 🟡 warning |
-| `capability_sync` | 代码变更必须更新 CAPABILITIES.md | 🟡 warning |
-| `no_any_type` | 禁止使用 any 类型 | 🟡 warning |
-| `no_bypass_checkpoint` | 禁止跳过检查点 | 🔴 error |
-| `test_coverage_required` | 测试覆盖率必须达标 | 🟡 warning |
-| `no_self_approval` | 禁止自评通过 | 🔴 error |
-| `doc_required_for_public_api` | 公共 API 必须有文档 | 🟡 warning |
-| `readme_required` | 新模块必须有 README | 🔵 info |
+| ID | 规则 | 层级 | 严重性 |
+|---|------|------|:------:|
+| `no_bypass_checkpoint` | 禁止跳过检查点 | iron_law | 🔴 error |
+| `no_self_approval` | 禁止自评通过 | iron_law | 🔴 error |
+| `no_completion_without_verification` | 完成必须有验证证据 | iron_law | 🔴 error |
+| `no_test_simplification` | 禁止擅自简化测试 | iron_law | 🔴 error |
+| `no_fix_without_root_cause` | 修复前必须找到根因 | guideline | 🔴 error |
+| `no_code_without_test` | 写代码前必须有测试 | guideline | 🔴 error |
+| `no_any_type` | 禁止使用 any 类型 | guideline | 🟡 warning |
+| `simplest_solution_first` | 优先选择最简方案 | guideline | 🟡 warning |
+| `no_creation_without_reuse_check` | 创建前必须检查可复用 | guideline | 🟡 warning |
+| `capability_sync` | 代码变更必须更新 CAPABILITIES.md | guideline | 🟡 warning |
+| `no_simplification_without_approval` | 不能擅自简化逻辑 | guideline | 🟡 warning |
+| `no_skill_without_test` | 创建技能前必须有测试 | guideline | 🟡 warning |
+| `test_coverage_required` | 测试覆盖率必须达标 | guideline | 🟡 warning |
+| `design_decision_requires_discussion` | 设计决策必须先讨论 | guideline | 🟡 warning |
+| `readme_required` | 新模块必须有 README | tip | 🔵 info |
+| `doc_required_for_public_api` | 公共 API 必须有文档 | tip | 🔵 info |
 
 ## 预设系统
 
@@ -157,6 +158,56 @@ const cleanResult = await cleaner.onSessionEnd(workDir, sessionInfo);
 | `strict` | 严格模式，所有检查启用 |
 | `standard` | 标准模式，推荐使用 |
 | `relaxed` | 宽松模式，警告不阻止 |
+
+## 自定义约束（v0.4+）
+
+### 扩展例外（v0.6+）
+
+使用 `extend_exceptions` 追加例外，保留内置例外：
+
+```yaml
+# .harness/custom-constraints.yml
+custom_constraints:
+  no_fix_without_root_cause:
+    extend_exceptions:
+      - my_special_case_1
+      - my_special_case_2
+```
+
+结果：内置例外 + 新增例外
+
+### 完全覆盖
+
+使用 `exceptions` 完全覆盖内置例外：
+
+```yaml
+# .harness/custom-constraints.yml
+custom_constraints:
+  no_fix_without_root_cause:
+    level: guideline
+    rule: Do not fix without root cause
+    message: 禁止没有根因分析就修复
+    trigger: bug_fix
+    exceptions:
+      - my_only_exception
+```
+
+结果：只使用自定义例外
+
+### 混合模式
+
+同时使用 `exceptions` 和 `extend_exceptions`：
+
+```yaml
+custom_constraints:
+  no_fix_without_root_cause:
+    exceptions:
+      - my_new_exception
+    extend_exceptions:
+      - another_exception
+```
+
+结果：内置例外 + my_new_exception + another_exception
 
 ## 项目模板
 

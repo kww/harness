@@ -13,20 +13,23 @@ export interface CustomConstraintDefinition {
   /** 约束 ID */
   id: string;
 
-  /** 约束层级 */
-  level: ConstraintLevel;
+  /** 约束层级（扩展例外时可省略，自动使用内置约束层级） */
+  level?: ConstraintLevel;
 
-  /** 约束规则（英文） */
-  rule: string;
+  /** 约束规则（扩展例外时可省略） */
+  rule?: string;
 
-  /** 约束消息（中文） */
-  message: string;
+  /** 约束消息（扩展例外时可省略） */
+  message?: string;
 
-  /** 触发条件 */
-  trigger: string | string[];
+  /** 触发条件（扩展例外时可省略） */
+  trigger?: string | string[];
 
-  /** 例外条件（可选） */
+  /** 例外条件（可选，完全覆盖内置例外） */
   exceptions?: string[];
+
+  /** 扩展例外（可选，追加到内置例外） */
+  extend_exceptions?: string[];
 
   /** 描述（可选） */
   description?: string;
