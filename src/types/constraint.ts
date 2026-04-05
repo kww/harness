@@ -43,7 +43,9 @@ export type ConstraintTrigger =
   | 'file_deletion'
   | 'commit'
   | 'push'
-  | 'merge';
+  | 'merge'
+  | 'design_request'
+  | 'architecture_change';
 
 /**
  * 约束定义

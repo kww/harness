@@ -327,6 +327,40 @@ export const GUIDELINES: Record<string, Constraint> = {
 - 为未覆盖的分支添加测试
 - 为边界条件添加测试`,
   },
+
+  /**
+   * 设计决策需先讨论
+   * 例外：明确指令、紧急修复、已有设计文档
+   */
+  design_decision_requires_discussion: {
+    id: 'design_decision_requires_discussion',
+    rule: 'DESIGN DECISIONS MUST BE DISCUSSED BEFORE IMPLEMENTATION',
+    message: '设计决策类任务需先讨论方案再实现',
+    level: 'guideline',
+    trigger: ['design_request', 'architecture_change', 'feature_development'],
+    enforcement: 'require-discussion',
+    description: `当用户问"怎么实现"、"设计方案"时，应先：
+
+1. 提供方案选项（至少 2 个）
+   - 方案 A: ...（优点/缺点）
+   - 方案 B: ...（优点/缺点）
+
+2. 说明推荐方案和理由
+
+3. 让用户选择或确认
+
+4. 用户确认后再实现
+
+[判断标准]
+- 用户问"怎么实现"、"如何设计" → 设计决策
+- 用户说"帮我做 xxx" → 执行任务
+
+[例外]
+- 用户明确说"直接做"、"不用问"
+- 紧急修复
+- 已有明确设计文档`,
+    exceptions: ['explicit_instruction', 'emergency_fix', 'existing_design'],
+  },
 };
 
 // ========================================
