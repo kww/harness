@@ -93,3 +93,27 @@ export interface DynamicTask {
   /** 测试结果 */
   testResult?: TaskTestResult;
 }
+
+/**
+ * PassesGate 扩展接口
+ * 
+ * 用于注册额外的测试类型（如 Puppeteer E2E）
+ */
+export interface PassesGateExtension {
+  /** 扩展名称 */
+  name: string;
+  
+  /** 扩展描述 */
+  description?: string;
+  
+  /** 运行测试 */
+  run(workDir: string, task?: DynamicTask): Promise<TaskTestResult>;
+}
+
+/**
+ * 扩展测试结果（包含类型标识）
+ */
+export interface ExtensionTestResult extends TaskTestResult {
+  /** 测试类型（扩展名称） */
+  type?: string;
+}

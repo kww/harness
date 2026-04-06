@@ -23,6 +23,7 @@ export type ConstraintLevel = 'iron_law' | 'guideline' | 'tip';
 export type ConstraintTrigger =
   | 'bug_fix_attempt'
   | 'task_completion_claim'
+  | 'feature_completion_claim'  // 🆕 功能完成声明（Long-Running）
   | 'skill_creation'
   | 'code_implementation'
   | 'test_creation'

@@ -13,3 +13,10 @@ export {
 } from './standard';
 
 export type { PresetConfig } from './standard';
+
+// Long-Running Agents 预设
+export {
+  LONG_RUNNING_PRESET,
+  LONG_RUNNING_PRESET_INFO,
+  getLongRunningPresetConstraints,
+} from './long-running';
