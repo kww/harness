@@ -41,9 +41,35 @@ export * from './extensions/long-running';
 // ========================================
 
 import { constraintChecker } from './core/constraints/checker';
-import type { ConstraintContext, ConstraintCheckResult, ConstraintResult } from './types/constraint';
+import type { ConstraintContext, ConstraintCheckResult, ConstraintResult, ConstraintTrigger } from './types/constraint';
 // 向后兼容
 import type { IronLawContext, IronLawResult } from './types/constraint';
+import { constraintInterceptor } from './core/constraints/interceptor';
+import type { EnforcementExecutor, EnforcementContext, EnforcementResult, EnforcementId, InterceptionResult } from './types/enforcement';
+
+export const interceptor = constraintInterceptor;
+
+export async function interceptOperation(
+  trigger: ConstraintTrigger,
+  context: ConstraintContext
+): Promise<InterceptionResult> {
+  return constraintInterceptor.intercept(trigger, context);
+}
+
+export async function claimOperation(
+  trigger: ConstraintTrigger,
+  context: ConstraintContext
+): Promise<void> {
+  return constraintInterceptor.claim(trigger, context);
+}
+
+export function registerExecutor(
+  enforcementId: EnforcementId,
+  executor: EnforcementExecutor,
+  source?: string
+): void {
+  constraintInterceptor.register(enforcementId, executor, source);
+}
 
 /**
  * 检查约束（三层）

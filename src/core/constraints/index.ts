@@ -54,3 +54,19 @@ export {
   // 向后兼容
   IronLawViolationError,
 } from '../../types/constraint';
+
+// 约束拦截器
+export {
+  ConstraintInterceptor,
+  constraintInterceptor,
+  interceptOperation,
+  claimOperation,
+} from './interceptor';
+
+export type {
+  EnforcementId,
+  EnforcementExecutor,
+  EnforcementContext,
+  EnforcementResult,
+  InterceptionResult,
+} from '../../types/enforcement';
