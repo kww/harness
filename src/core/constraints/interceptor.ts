@@ -69,6 +69,15 @@ export class ConstraintInterceptor {
     return this.executors.get(enforcementId);
   }
 
+  getRegistrations(): { id: EnforcementId; executor: EnforcementExecutor; registeredAt: Date; source?: string }[] {
+    return Array.from(this.executors.entries()).map(([id, executor]) => ({
+      id,
+      executor,
+      registeredAt: new Date(),
+      source: undefined,
+    }));
+  }
+
   skip(enforcementIds: EnforcementId[]): void {
     for (const id of enforcementIds) {
       this.skipEnforcements.add(id);

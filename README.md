@@ -1,6 +1,6 @@
 # @dommaker/harness
 
-> 通用工程约束框架 - 铁律系统、检查点验证、测试门控
+> 通用工程约束框架 - 铁律系统、检查点验证、测试门控、拦截器
 
 ## 简介
 
@@ -13,12 +13,11 @@
 | **铁律系统** | 16 条内置约束（4 Iron Laws + 10 Guidelines + 2 Tips） |
 | **检查点验证** | 验证工作流步骤的结果是否符合预期 |
 | **测试门控** | 禁止自评通过，必须通过真实测试 |
+| **拦截器** | 抽象拦截框架，自动执行 enforcement（v0.7+） |
 | **Session 管理** | 启动检查点 + 结束状态管理 |
 | **预设系统** | 提供 strict/standard/relaxed 三种预设 |
-| **Execution Trace** | 轻量记录约束检查，异常检测，诊断系统（v0.3+） |
-| **项目级自定义约束** | 扩展/覆盖内置约束，无需 fork（v0.4+） |
-| **智能提示** | check 后根据条件提示下一步操作（v0.6+） |
-| **一键流程** | harness flow 一键执行诊断+提案（v0.6+） |
+| **Execution Trace** | 轻量记录约束检查，异常检测，诊断系统 |
+| **项目级自定义约束** | 扩展/覆盖内置约束，无需 fork |
 | **CLI 工具** | 命令行工具执行检查 |
 
 ## 安装
@@ -129,6 +128,82 @@ const { success, results } = await startup.run();
 const cleaner = new CleanStateManager();
 const cleanResult = await cleaner.onSessionEnd(workDir, sessionInfo);
 ```
+
+### 5. 使用拦截器（v0.7+）
+
+拦截器自动执行 enforcement，无需手动调用检查 API：
+
+```typescript
+import { 
+  interceptor, 
+  registerExecutor,
+  interceptOperation,
+  claimOperation,
+  type EnforcementExecutor,
+  type ConstraintContext,
+} from '@dommaker/harness';
+
+// 1. 注册执行器（使用者实现具体逻辑）
+registerExecutor('verify-completion', {
+  description: '验证完成声明：运行测试命令',
+  supportedParams: ['command', 'timeout'],
+  async execute(context) {
+    // 使用者自定义验证逻辑
+    const result = await exec('npm test', { cwd: context.projectPath });
+    return {
+      passed: result.success,
+      evidence: result.stdout,
+    };
+  },
+});
+
+// 2. 在关键操作前拦截
+try {
+  // 拦截 task_completion_claim 操作
+  // 自动查找适用的约束并执行对应的 enforcement
+  await claimOperation('task_completion_claim', {
+    operation: 'task_completion_claim',
+    projectPath: '/path/to/project',
+    sessionId: 'session-123',
+  });
+  
+  // 拦截通过，可以宣布完成
+  await announceCompletion();
+} catch (e) {
+  // 拦截失败，铁律违规
+  console.error('必须先验证才能完成');
+}
+
+// 3. 查询拦截结果（不抛异常）
+const result = await interceptOperation('task_completion_claim', context);
+if (result.passed) {
+  console.log('✅ 通过拦截');
+} else {
+  console.log('❌ 约束违规:', result.violations);
+}
+```
+
+**拦截器 vs 手动检查**：
+
+| 方式 | 特点 |
+|------|------|
+| 手动检查 | `checkConstraints()` 需要手动调用 API |
+| 拦截器 | 自动执行 enforcement，抽象框架，使用者实现逻辑 |
+
+**内置 enforcement IDs**：
+
+| enforcement | 说明 |
+|-------------|------|
+| verify-completion | 验证完成声明：运行测试 |
+| verify-e2e | 验证端到端测试 |
+| debug-systematic | 系统性调试检查 |
+| reuse-first | 复用优先检查 |
+| update-capabilities | CAPABILITIES.md 同步检查 |
+| tdd-cycle | TDD 循环检查 |
+| passes-gate | 测试门控 |
+| checkpoint-required | 检查点必须通过 |
+| check-coverage | 覆盖率检查 |
+| require-discussion | 设计决策讨论检查 |
 
 ## 内置约束（16 条）
 
