@@ -58,6 +58,18 @@ export interface ProjectConfig {
 
   /** 自定义约束（直接定义） */
   custom_constraints?: Record<string, CustomConstraintDefinition>;
+
+  /** Spec 验证配置 */
+  spec?: {
+    /** 是否启用 Spec 验证 */
+    enabled?: boolean;
+    /** Schema 路径（项目定义） */
+    schemaPath?: string;
+    /** 要验证的文件模式 */
+    files?: string[];
+    /** 验证失败的级别 */
+    failureLevel?: 'error' | 'warning';
+  };
 }
 
 /**

@@ -40,3 +40,6 @@ export * from './project-config';
 
 // Enforcement 类型
 export * from './enforcement';
+
+// Spec 验证类型
+export * from './spec';

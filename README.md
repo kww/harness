@@ -97,7 +97,48 @@ jobs:
       - run: npx harness passes-gate
 ```
 
-### 4. 在代码中使用
+### 5. Spec 验证
+
+验证架构文档、模块定义、API 定义等 Spec 文件：
+
+```bash
+# 验证所有 Spec 文件
+harness spec
+
+# 验证暂存文件（pre-commit）
+harness spec --staged
+
+# 验证指定文件
+harness spec --file ARCHITECTURE.md
+
+# 使用自定义 Schema
+harness spec --schema ./my-specs/schemas
+
+# 列出支持的 Spec 类型
+harness spec list
+```
+
+**项目自定义 Schema**：
+
+项目可以定义自己的 Spec Schema，在 `src/specs/schemas/index.ts` 中导出 `validate` 函数：
+
+```typescript
+// src/specs/schemas/index.ts
+import { z } from 'zod';
+
+export const ArchitectureSchema = z.object({
+  name: z.string(),
+  version: z.string(),
+  modules: z.array(z.string()),
+});
+
+export async function validate(content: string, filePath: string) {
+  // 解析并验证内容
+  // 返回 SpecValidationResult
+}
+```
+
+### 6. 在代码中使用
 
 ```typescript
 import { 

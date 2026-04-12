@@ -18,7 +18,9 @@ const {
   diagnoseCommand,
   proposeCommand,
   status,
-  flow
+  flow,
+  specValidate,
+  listSpecTypes
 } = require('../dist/cli/commands/index');
 
 const program = new Command();
@@ -26,7 +28,7 @@ const program = new Command();
 program
   .name('harness')
   .description('通用工程约束框架 - 铁律系统、检查点验证、测试门控、执行追踪')
-  .version('0.3.0');
+  .version('0.7.0');
 
 // ========================================
 // harness check
@@ -228,6 +230,32 @@ program
       autoApply: options.autoApply,
       hours: parseInt(options.hours, 10),
     });
+  });
+
+// ========================================
+// harness spec
+// ========================================
+program
+  .command('spec [subcommand]')
+  .description('Spec 验证命令')
+  .option('-s, --schema <path>', 'Schema 路径（项目定义）')
+  .option('--staged', '只验证暂存文件', false)
+  .option('-f, --file <path>', '验证指定文件')
+  .option('-p, --project-path <path>', '项目路径')
+  .option('-v, --verbose', '详细输出', false)
+  .action(async (subcommand, options, command) => {
+    if (subcommand === 'list') {
+      listSpecTypes();
+    } else {
+      // 默认执行 validate
+      await specValidate({
+        schema: options.schema,
+        staged: options.staged,
+        file: options.file || (subcommand && !subcommand.startsWith('-') ? subcommand : undefined),
+        projectPath: options.projectPath,
+        verbose: options.verbose,
+      });
+    }
   });
 
 // 解析命令行参数
