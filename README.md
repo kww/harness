@@ -683,32 +683,3 @@ harness propose implement --diagnosis <id>
 | Agent 诊断 | 按需 | ~2000 |
 
 **对比 Meta-Harness**：百万级 vs 5500/周，成本降低 **180 倍**。
-
----
-
-## 发布流程
-
-**⚠️ 使用 GitHub Actions 自动发布，不尝试本地 `npm publish`**
-
-```bash
-# 1. 更新版本
-npm version patch --no-git-tag-version
-
-# 2. 提交并推送
-git add package.json package-lock.json
-git commit -m "chore: bump version to x.x.x"
-git push origin master
-
-# 3. 创建 tag（触发 GitHub Actions 自动发布）
-git tag vx.x.x
-git push origin vx.x.x
-
-# 4. 查看发布状态
-gh run list --limit 1
-gh run watch <run-id>
-```
-
-**注意**：
-- 推送 tag 后 GitHub Actions 自动执行 `npm publish`
-- 版本号已存在于 npm 时会发布失败，需先更新版本号
-- 发布成功后手动创建 GitHub Release（或让 workflow 自动创建）
