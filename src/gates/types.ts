@@ -96,3 +96,39 @@ export interface ContractGateConfig {
   allowBreakingChanges: boolean;
   contractPath?: string;
 }
+
+/**
+ * 验收标准门禁配置
+ */
+export interface SpecAcceptanceGateConfig {
+  /** tasks.yml 路径 */
+  tasksPath?: string;
+  /** 是否检查所有任务 */
+  checkAllTasks?: boolean;
+  /** 自定义验收条件 */
+  customAcceptanceCriteria?: Record<string, (task: any) => Promise<boolean>>;
+}
+
+/**
+ * 验收标准门禁上下文
+ */
+export interface AcceptanceGateContext {
+  /** 项目路径 */
+  projectPath: string;
+  /** 任务 ID */
+  taskId?: string;
+  /** tasks.yml 路径 */
+  tasksPath?: string;
+}
+
+/**
+ * 验收标准
+ */
+export interface AcceptanceCriteria {
+  id: string;
+  description: string;
+  type: 'manual' | 'automated' | 'test';
+  required: boolean;
+  checked?: boolean;
+  notes?: string;
+}

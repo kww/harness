@@ -9,5 +9,15 @@ export * from './constraints';
 export * from './validators';
 export * from './session';
 
+// Spec 验证器
+export { SpecValidator } from './spec/validator';
+export type {
+  SpecValidatorConfig,
+  SpecValidationResult,
+  BatchSpecValidationResult,
+  SpecSchemaDefinition,
+  SpecType,
+} from '../types/spec';
+
 // 项目配置加载器
 export * from './project-config-loader';

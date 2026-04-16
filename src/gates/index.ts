@@ -13,6 +13,9 @@ export type {
   SecurityGateConfig,
   PerformanceGateConfig,
   ContractGateConfig,
+  SpecAcceptanceGateConfig,
+  AcceptanceGateContext,
+  AcceptanceCriteria,
 } from './types';
 
 // 门禁类导出
@@ -20,17 +23,20 @@ export { ReviewGate } from './review';
 export { SecurityGate } from './security';
 export { PerformanceGate } from './performance';
 export { ContractGate } from './contract';
+export { SpecAcceptanceGate } from './acceptance';
 
 // 便捷工厂函数
 import { ReviewGate } from './review';
 import { SecurityGate } from './security';
 import { PerformanceGate } from './performance';
 import { ContractGate } from './contract';
+import { SpecAcceptanceGate } from './acceptance';
 import type {
   ReviewGateConfig,
   SecurityGateConfig,
   PerformanceGateConfig,
   ContractGateConfig,
+  SpecAcceptanceGateConfig,
 } from './types';
 
 export function createReviewGate(config?: Partial<ReviewGateConfig>): ReviewGate {
@@ -47,4 +53,8 @@ export function createPerformanceGate(config?: Partial<PerformanceGateConfig>): 
 
 export function createContractGate(config?: Partial<ContractGateConfig>): ContractGate {
   return new ContractGate(config);
+}
+
+export function createSpecAcceptanceGate(config?: Partial<SpecAcceptanceGateConfig>): SpecAcceptanceGate {
+  return new SpecAcceptanceGate(config);
 }
