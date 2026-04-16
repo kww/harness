@@ -11,7 +11,7 @@
 | 功能 | 说明 |
 |------|------|
 | **铁律系统** | 16 条内置约束（4 Iron Laws + 10 Guidelines + 2 Tips） |
-| **门禁系统** | 6 种门禁（测试、审查、安全、性能、契约、检查点） |
+| **门禁系统** | 7 种门禁（测试、审查、安全、性能、契约、检查点、验收标准） |
 | **检查点验证** | 验证工作流步骤的结果是否符合预期 |
 | **拦截器** | 抽象拦截框架，自动执行 enforcement |
 | **Session 管理** | 启动检查点 + 结束状态管理 |
@@ -183,6 +183,7 @@ harness 提供完整的门禁系统，支持多种门禁类型：
 | 性能门禁 | `PerformanceGate` | 响应时间、覆盖率、打包大小检查 |
 | 契约门禁 | `ContractGate` | OpenAPI 契约验证 |
 | 检查点验证 | `CheckpointValidator` | 验证工作流步骤结果 |
+| 验收标准门禁 | `SpecAcceptanceGate` | 验证任务是否满足验收标准 |
 
 **使用门禁**：
 
@@ -194,6 +195,7 @@ import {
   PerformanceGate,
   ContractGate,
   CheckpointValidator,
+  SpecAcceptanceGate,
 } from '@dommaker/harness';
 
 // 测试门控
@@ -519,6 +521,60 @@ class ContractGate {
 }
 ```
 
+### SpecAcceptanceGate
+
+验收标准门禁，用于验证任务是否满足验收标准：
+
+```typescript
+import { SpecAcceptanceGate } from '@dommaker/harness';
+
+// 创建验收门禁
+const acceptanceGate = new SpecAcceptanceGate({
+  tasksPath: './tasks.yml',
+  checkAllTasks: false,
+});
+
+// 检查单个任务
+const result = await acceptanceGate.check({
+  projectPath: '/path/to/project',
+  taskId: 'task-001',
+  tasksPath: './tasks.yml',
+});
+
+// 检查所有任务
+const allResults = await acceptanceGate.check({
+  projectPath: '/path/to/project',
+  checkAllTasks: true,
+});
+
+// 自定义验收条件
+const customGate = new SpecAcceptanceGate({
+  customAcceptanceCriteria: {
+    'has-tests': async (task) => {
+      // 自定义验证逻辑
+      return true;
+    },
+  },
+});
+```
+
+**验收标准格式（tasks.yml）**：
+
+```yaml
+tasks:
+  - id: task-001
+    title: 实现用户登录
+    acceptance_criteria:
+      - id: ac-1
+        description: 用户可以使用邮箱登录
+        type: automated
+        required: true
+      - id: ac-2
+        description: 登录失败显示错误提示
+        type: manual
+        required: true
+```
+
 ### SessionStartup
 
 ```typescript
@@ -683,3 +739,87 @@ harness propose implement --diagnosis <id>
 | Agent 诊断 | 按需 | ~2000 |
 
 **对比 Meta-Harness**：百万级 vs 5500/周，成本降低 **180 倍**。
+
+---
+
+## Long-Running Agents 扩展模块
+
+> 来源：Anthropic Engineering Blog - Effective Harnesses for Long-Running Agents
+
+这个扩展模块提供针对长时间运行的 Agent 项目的额外约束和类型定义。
+
+### 启用方式
+
+```yaml
+# .harness/config.yml
+preset: long-running
+```
+
+### 内置约束
+
+| ID | 规则 | 层级 | 说明 |
+|---|------|------|------|
+| `incremental_progress_required` | 单功能推进 | iron_law | 每次 session 只推进一个功能，防止 one-shotting |
+| `no_feature_without_decomposition` | 功能拆解 | guideline | 实现功能前必须先拆解为可验证的子任务 |
+| `no_feature_completion_without_e2e_test` | E2E 测试 | guideline | 功能完成必须有端到端测试验证 |
+
+### 使用方式
+
+```typescript
+import {
+  LONG_RUNNING_IRON_LAWS,
+  LONG_RUNNING_GUIDELINES,
+  FeatureDefinition,
+  ProjectProgress,
+  PuppeteerTestInput,
+} from '@dommaker/harness/extensions/long-running';
+
+// 检查单功能推进约束
+const constraint = LONG_RUNNING_IRON_LAWS.incremental_progress_required;
+
+// 定义功能清单
+const feature: FeatureDefinition = {
+  id: 'user-login',
+  category: 'functional',
+  description: '用户登录功能',
+  steps: ['打开登录页', '输入邮箱', '点击登录按钮', '验证跳转'],
+  passes: false,
+  priority: 'high',
+  dependencies: [],
+  verificationType: 'e2e',
+};
+
+// 跨 session 进度追踪
+const progress: ProjectProgress = {
+  projectId: 'my-project',
+  features: [{ featureId: 'user-login', status: 'in_progress' }],
+  sessions: [],
+  lastUpdate: new Date().toISOString(),
+};
+```
+
+### 类型定义
+
+| 类型 | 说明 |
+|------|------|
+| `FeatureDefinition` | 功能定义（id、分类、步骤、优先级） |
+| `FeatureList` | 功能清单（项目级） |
+| `ProjectProgress` | 项目进度（跨 session） |
+| `FeatureStatus` | 功能状态（pending/in_progress/completed/blocked） |
+| `SessionRecord` | Session 记录 |
+| `TestStep` | Puppeteer 测试步骤 |
+| `PuppeteerTestInput` | E2E 测试输入 |
+| `PuppeteerTestResult` | E2E 测试结果 |
+
+### 工作流集成
+
+Long-Running Agents 模式配合以下工作流使用：
+
+1. **initializer.yml**：自动拆解需求为功能清单
+2. **puppeteer-test.yml**：自动执行 E2E 测试
+3. **progress-tracker.yml**：跨 session 追踪进度
+
+### 参考文档
+
+- [Anthropic Engineering Blog - Effective Harnesses for Long-Running Agents](https://www.anthropic.com/engineering/harnesses)
+- `~/knowledge-base/projects/harness/anthropic-long-running-agents-roadmap.md`
