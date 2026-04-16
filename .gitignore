@@ -24,3 +24,6 @@ coverage/
 # Temp
 *.tmp
 .env.local
+
+# Internal agent docs
+AGENTS.md
