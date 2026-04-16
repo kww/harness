@@ -31,11 +31,6 @@
       "types": "./dist/presets/index.d.ts",
       "require": "./dist/presets/index.js",
       "import": "./dist/presets/index.js"
-    },
-    "./extensions/long-running": {
-      "types": "./dist/extensions/long-running/index.d.ts",
-      "require": "./dist/extensions/long-running/index.js",
-      "import": "./dist/extensions/long-running/index.js"
     }
   },
   "files": [
