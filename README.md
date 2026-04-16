@@ -1,6 +1,6 @@
 # @dommaker/harness
 
-> 通用工程约束框架 - 铁律系统、检查点验证、测试门控、拦截器
+> 通用工程约束框架 - 铁律系统、门禁系统、检查点验证、拦截器
 
 ## 简介
 
@@ -11,13 +11,13 @@
 | 功能 | 说明 |
 |------|------|
 | **铁律系统** | 16 条内置约束（4 Iron Laws + 10 Guidelines + 2 Tips） |
+| **门禁系统** | 6 种门禁（测试、审查、安全、性能、契约、检查点） |
 | **检查点验证** | 验证工作流步骤的结果是否符合预期 |
-| **测试门控** | 禁止自评通过，必须通过真实测试 |
-| **拦截器** | 抽象拦截框架，自动执行 enforcement（v0.7+） |
+| **拦截器** | 抽象拦截框架，自动执行 enforcement |
 | **Session 管理** | 启动检查点 + 结束状态管理 |
 | **预设系统** | 提供 strict/standard/relaxed 三种预设 |
 | **Execution Trace** | 轻量记录约束检查，异常检测，诊断系统 |
-| **Spec 验证** | 验证架构文档、模块定义、API 定义（v0.7+） |
+| **Spec 验证** | 验证架构文档、模块定义、API 定义 |
 | **项目级自定义约束** | 扩展/覆盖内置约束，无需 fork |
 | **CLI 工具** | 命令行工具执行检查 |
 
@@ -171,7 +171,110 @@ const cleaner = new CleanStateManager();
 const cleanResult = await cleaner.onSessionEnd(workDir, sessionInfo);
 ```
 
-### 5. 使用拦截器（v0.7+）
+### 7. 门禁系统
+
+harness 提供完整的门禁系统，支持多种门禁类型：
+
+| 门禁 | 类 | 说明 |
+|------|-----|------|
+| 测试门控 | `PassesGate` | 禁止自评通过，必须通过真实测试 |
+| 审查门禁 | `ReviewGate` | 检查 GitHub PR 审查状态 |
+| 安全门禁 | `SecurityGate` | npm audit 安全漏洞扫描 |
+| 性能门禁 | `PerformanceGate` | 响应时间、覆盖率、打包大小检查 |
+| 契约门禁 | `ContractGate` | OpenAPI 契约验证 |
+| 检查点验证 | `CheckpointValidator` | 验证工作流步骤结果 |
+
+**使用门禁**：
+
+```typescript
+import {
+  PassesGate,
+  ReviewGate,
+  SecurityGate,
+  PerformanceGate,
+  ContractGate,
+  CheckpointValidator,
+} from '@dommaker/harness';
+
+// 测试门控
+const passesGate = new PassesGate({ requireEvidence: true });
+const testResult = await passesGate.runTests();
+
+// 审查门禁
+const reviewGate = new ReviewGate({ minReviewers: 2 });
+const reviewResult = await reviewGate.check({
+  projectId: 'my-project',
+  projectPath: '/path/to/project',
+  prNumber: 123,
+});
+
+// 安全门禁
+const securityGate = new SecurityGate({ severityThreshold: 'high' });
+const securityResult = await securityGate.scan({
+  projectId: 'my-project',
+  projectPath: '/path/to/project',
+});
+
+// 性能门禁（带超时）
+const performanceGate = new PerformanceGate({
+  thresholds: {
+    maxResponseTime: 500,
+    minCoverage: 80,
+    maxBundleSize: 1024,
+  },
+  coverageTimeout: 120000,  // 2分钟超时
+});
+const perfResult = await performanceGate.check({
+  projectId: 'my-project',
+  projectPath: '/path/to/project',
+});
+
+// 契约门禁
+const contractGate = new ContractGate({ strict: true });
+const contractResult = await contractGate.check({
+  projectId: 'my-project',
+  projectPath: '/path/to/project',
+  newContractPath: '/path/to/openapi.yaml',
+});
+
+// 检查点验证
+const checkpointValidator = CheckpointValidator.getInstance();
+const checkpointResult = await checkpointValidator.validate(checkpoints, {
+  workdir: '/path/to/project',
+});
+```
+
+**门禁结果**：
+
+```typescript
+interface GateResult {
+  gate: string;           // 门禁类型
+  passed: boolean;        // 是否通过
+  message: string;        // 结果消息
+  details?: {             // 详细信息
+    metrics?: object;     // 性能指标
+    failures?: string[];  // 失败项
+    warnings?: string[];  // 警告项
+  };
+  timestamp: string;      // 时间戳
+  duration?: number;      // 执行时长（毫秒）
+}
+```
+
+**PerformanceGate 超时配置**：
+
+```typescript
+const gate = new PerformanceGate({
+  thresholds: { minCoverage: 80 },
+  coverageTimeout: 60000,   // 覆盖率测试超时（毫秒）
+  benchmarkTimeout: 30000,  // 基准测试超时（毫秒）
+});
+
+// 动态设置超时
+gate.setTimeouts({ coverage: 120000 });
+```
+
+### 8. 使用拦截器
 
 拦截器自动执行 enforcement，无需手动调用检查 API：
 
@@ -369,6 +472,50 @@ class PassesGate {
   
   setPasses(taskId: string, value: boolean, workDir: string): Promise<PassesGateResult>;
   runTests(): Promise<TestResult>;
+}
+```
+
+### ReviewGate
+
+```typescript
+class ReviewGate {
+  constructor(config: ReviewGateConfig);
+  
+  check(context: GateContext): Promise<GateResult>;
+  setMinReviewers(count: number): void;
+}
+```
+
+### SecurityGate
+
+```typescript
+class SecurityGate {
+  constructor(config: SecurityGateConfig);
+  
+  scan(context: GateContext): Promise<GateResult>;
+}
+```
+
+### PerformanceGate
+
+```typescript
+class PerformanceGate {
+  constructor(config: PerformanceGateConfig);
+  
+  check(context: GateContext): Promise<GateResult>;
+  runBenchmark(context: GateContext): Promise<BenchmarkResult>;
+  setThresholds(thresholds: Partial<PerformanceThresholds>): void;
+  setTimeouts(options: { coverage?: number; benchmark?: number }): void;
+}
+```
+
+### ContractGate
+
+```typescript
+class ContractGate {
+  constructor(config: ContractGateConfig);
+  
+  check(context: GateContext): Promise<GateResult>;
 }
 ```
 
