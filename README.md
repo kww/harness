@@ -18,6 +18,7 @@
 | **预设系统** | 提供 strict/standard/relaxed 三种预设 |
 | **Execution Trace** | 轻量记录约束检查，异常检测，诊断系统 |
 | **Performance Trace** | 性能日志收集，统计分析，异常检测（🆕） |
+| **Failure Classification** | 错误分类，失败记录，等级映射（🆕） |
 | **Spec 验证** | 验证架构文档、模块定义、API 定义 |
 | **项目级自定义约束** | 扩展/覆盖内置约束，无需 fork |
 | **CLI 工具** | 命令行工具执行检查 |
@@ -820,3 +821,102 @@ const report = analyzer.generateReport(summaries, anomalies);
 | **监控"什么"** | 对不对 | 快不快 |
 | **异常类型** | 高绕过率、失败率上升 | 慢操作、超阈值 |
 | **存储路径** | `.harness/logs/traces.log` | `.harness/logs/performance.log` |
+
+---
+
+## Failure Classification 系统（v0.4+）
+
+### 概念
+
+Failure Classification 提供通用的错误分类和记录能力，用于：
+- 统一错误分类标准
+- 分级处理失败（L1-L4）
+- 记录失败历史供分析
+
+### 设计原则
+
+| 原则 | 说明 |
+|------|------|
+| **零业务逻辑** | 只提供类型 + 分类 + 记录能力 |
+| **可扩展规则** | 支持自定义分类规则 |
+| **文件存储** | 追加写入，单行 JSON 格式 |
+
+### 错误类型
+
+```typescript
+enum ErrorType {
+  TEST_FAILED = 'TEST_FAILED',       // 测试失败
+  GATE_FAILED = 'GATE_FAILED',       // 门禁检查失败
+  DEPENDENCY_BLOCKED = 'DEPENDENCY_BLOCKED', // 依赖阻塞
+  CONTEXT_OVERFLOW = 'CONTEXT_OVERFLOW',     // 上下文溢出
+  TIMEOUT = 'TIMEOUT',               // 超时
+  NETWORK_ERROR = 'NETWORK_ERROR',   // 网络错误
+  AGENT_ERROR = 'AGENT_ERROR',       // Agent 错误
+  TOOL_ERROR = 'TOOL_ERROR',         // 工具错误
+  VALIDATION_ERROR = 'VALIDATION_ERROR', // 验证错误
+  UNKNOWN = 'UNKNOWN',               // 未知错误
+}
+```
+
+### 失败等级
+
+| 等级 | 说明 | 处理策略 |
+|------|------|---------|
+| L1 | 自动重试 | 重试、降级 |
+| L2 | 需要干预 | 人工审核 |
+| L3 | 严重问题 | 开会讨论 |
+| L4 | 致命错误 | 回滚 |
+
+### API 使用
+
+```typescript
+import {
+  ErrorClassifier,
+  FailureRecorder,
+  ErrorType,
+  FailureLevel,
+  classifyError,
+} from '@dommaker/harness';
+
+// 快速分类
+const type = classifyError(new Error('test failed'));
+// type === ErrorType.TEST_FAILED
+
+// 完整分类器
+const classifier = new ErrorClassifier({
+  rules: [
+    {
+      type: ErrorType.CUSTOM_ERROR,
+      keywords: ['custom', 'specific'],
+      level: FailureLevel.L2,
+    },
+  ],
+});
+
+const result = classifier.classify(new Error('custom error'));
+// result.type, result.level, result.matchedRule
+
+// 失败记录
+const recorder = new FailureRecorder({
+  logFile: '.harness/logs/failures.log',
+});
+
+await recorder.record({
+  type: ErrorType.TEST_FAILED,
+  level: FailureLevel.L1,
+  message: 'Test failed',
+  timestamp: Date.now(),
+});
+
+// 获取统计
+const stats = await recorder.getStats();
+// { total, byType, byLevel }
+```
+
+### 与 PerformanceCollector 对比
+
+| 能力 | PerformanceCollector | FailureRecorder |
+|------|---------------------|-----------------|
+| **监控目标** | 操作耗时 | 错误分类 |
+| **存储内容** | 性能指标 | 失败记录 |
+| **分析维度** | 慢操作、超阈值 | 错误类型分布、失败等级 |

@@ -46,3 +46,14 @@ export * from './enforcement';
 
 // Spec 验证类型
 export * from './spec';
+
+// Failure 类型（从 failure 模块导入）
+export {
+  ErrorType,
+  FailureLevel,
+  ErrorClassificationRule,
+  FailureRecord,
+  ClassificationResult,
+  DEFAULT_CLASSIFICATION_RULES,
+  DEFAULT_LEVEL_MAPPING,
+} from '../failure/types';
