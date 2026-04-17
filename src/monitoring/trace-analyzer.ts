@@ -24,7 +24,7 @@ import { TraceCollector } from './traces';
  * 默认配置
  */
 const DEFAULT_CONFIG: TraceAnalyzerConfig = {
-  summaryFile: '.harness/traces/summary.json',
+  summaryFile: '.harness/logs/traces-summary.json',
   periodMs: 3600 * 1000, // 1 小时
   thresholds: {
     bypassRate: 0.3,      // 绕过率 > 30% 视为异常

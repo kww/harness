@@ -12,6 +12,9 @@ export * from './cso';
 // Trace 类型（Execution Trace 系统）
 export * from './trace';
 
+// Performance 类型（Performance Trace 系统）
+export * from './performance';
+
 // 诊断和提案类型（从 monitoring 导入）
 export type { Diagnosis } from '../monitoring/constraint-doctor';
 export type {
