@@ -17,6 +17,7 @@
 | **Session 管理** | 启动检查点 + 结束状态管理 |
 | **预设系统** | 提供 strict/standard/relaxed 三种预设 |
 | **Execution Trace** | 轻量记录约束检查，异常检测，诊断系统 |
+| **Performance Trace** | 性能日志收集，统计分析，异常检测（🆕） |
 | **Spec 验证** | 验证架构文档、模块定义、API 定义 |
 | **项目级自定义约束** | 扩展/覆盖内置约束，无需 fork |
 | **CLI 工具** | 命令行工具执行检查 |
@@ -739,3 +740,83 @@ harness propose implement --diagnosis <id>
 | Agent 诊断 | 按需 | ~2000 |
 
 **对比 Meta-Harness**：百万级 vs 5500/周，成本降低 **180 倍**。
+
+---
+
+## Performance Trace 系统（v0.4+）
+
+### 概念
+
+Performance Trace 是性能数据的轻量记录，用于：
+- 监控关键操作耗时
+- 检测性能异常（慢操作、超阈值）
+- 统计 Token 使用和上下文大小
+- 为性能优化提供数据基础
+
+### 设计原则
+
+| 原则 | 说明 |
+|------|------|
+| **零 Token 成本** | 记录和统计都不调用 LLM |
+| **文件存储** | 追加写入，单行 JSON 格式 |
+| **异步分析** | 统计每小时执行，异常检测每日执行 |
+| **可配置阈值** | 按操作类型设置不同的性能阈值 |
+
+### Trace 数据结构
+
+```typescript
+interface PerformanceTrace {
+  operation: string;        // 操作名称
+  startTime: number;        // 开始时间戳
+  duration: number;         // 耗时（毫秒）
+  status: 'ok' | 'exceeded' | 'error';
+  threshold?: number;       // 配置的阈值
+  metadata?: Record<string, unknown>;
+}
+```
+
+### API 使用
+
+```typescript
+import { PerformanceCollector, PerformanceAnalyzer } from '@dommaker/harness';
+
+// 创建收集器
+const collector = new PerformanceCollector({
+  logFile: '.harness/logs/performance.log',
+  thresholds: {
+    extract: 1000,    // 提取操作阈值 1s
+    transform: 500,   // 转换操作阈值 500ms
+    invoke: 10000,    // 调用操作阈值 10s
+  },
+});
+
+// 记录操作
+await collector.recordOk('extract', 150, { contextSize: 5000 });
+await collector.recordExceeded('invoke', 12000, 10000, { agent: 'skill-agent' });
+
+// 分析统计
+const analyzer = new PerformanceAnalyzer();
+const summaries = analyzer.summarize(traces);
+const anomalies = analyzer.detectAnomalies(traces);
+
+// 生成报告
+const report = analyzer.generateReport(summaries, anomalies);
+```
+
+### 文件位置
+
+```
+.harness/logs/
+├── performance.log          # 性能日志
+├── performance-summary.json # 统计汇总
+└── tokens.log               # Token 使用日志
+```
+
+### 与 TraceCollector 对比
+
+| 能力 | TraceCollector | PerformanceCollector |
+|------|----------------|---------------------|
+| **监控目标** | 约束检查结果 | 操作耗时 |
+| **监控"什么"** | 对不对 | 快不快 |
+| **异常类型** | 高绕过率、失败率上升 | 慢操作、超阈值 |
+| **存储路径** | `.harness/logs/traces.log` | `.harness/logs/performance.log` |
