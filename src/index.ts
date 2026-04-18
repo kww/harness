@@ -43,6 +43,23 @@ export * from './monitoring';
 export * from './failure';
 
 // ========================================
+// 架构约束导出
+// ========================================
+export * from './architecture/constraint-engine';
+export * from './architecture/cross-project-checker';
+
+// ========================================
+// Spec 检查导出
+// ========================================
+export * from './spec/annotation-checker';
+
+// ========================================
+// 上下文加载导出 (HZ-002)
+// ========================================
+export * from './context/progressive-loader';
+export * from './context/token-budget';
+
+// ========================================
 // 预设导出
 // ========================================
 export * from './presets';

@@ -84,6 +84,40 @@ export const IRON_LAWS: Record<string, Constraint> = {
 - 为了绕过异步问题而跳过断言
 - 降低测试覆盖率要求`,
   },
+
+  /**
+   * 禁止一次做多个任务（one-shotting）
+   * 来源：Anthropic AI Harness - Effective Harnesses for Long-running Agents
+   * 原因：避免中途耗尽 context，保持专注和可控
+   */
+  incremental_progress: {
+    id: 'incremental_progress',
+    rule: 'ONE TASK PER SESSION',
+    message: '禁止一次做多个任务，每次只做一件事',
+    level: 'iron_law',
+    trigger: 'feature_completion_claim',
+    enforcement: 'single-task-check',
+    description: `一个 session 只处理一个任务，避免 one-shotting。
+
+【禁止】
+- 一次做多个任务 → 中途耗尽 context
+- 大改动一次性完成 → 失控
+- 没有拆分的复杂任务 → 无法回滚
+
+【必须】
+- 一个 session 一个任务 → 保持专注
+- 大任务拆分为小步骤 → 分步执行
+- 每步都有 checkpoint → 可回滚
+
+【判断标准】
+- 改动涉及多个模块 → 需拆分
+- 改动超过 100 行 → 需拆分
+- 改动影响多个文件 → 需拆分
+
+【参考】
+Anthropic AI: "Effective Harnesses for Long-running Agents"
+https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents`,
+  },
 };
 
 // ========================================
