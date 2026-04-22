@@ -46,7 +46,8 @@ export type ConstraintTrigger =
   | 'push'
   | 'merge'
   | 'design_request'
-  | 'architecture_change';
+  | 'architecture_change'
+  | 'external_api_design';  // 🆕 Iron Law #6: 外部 API 设计
 
 /**
  * 约束定义

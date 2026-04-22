@@ -118,6 +118,46 @@ export const IRON_LAWS: Record<string, Constraint> = {
 Anthropic AI: "Effective Harnesses for Long-running Agents"
 https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents`,
   },
+
+  /**
+   * 禁止实现未验证的外部依赖能力
+   * 来源：DD-009 Discord 按钮方案教训（2026-04-22）
+   * 原因：假设外部系统能力存在，实现后发现不支持，浪费开发时间
+   */
+  verify_external_capability: {
+    id: 'verify_external_capability',
+    rule: 'VERIFY EXTERNAL CAPABILITY BEFORE IMPLEMENTATION',
+    message: '外部依赖能力必须先验证',
+    level: 'iron_law',
+    trigger: 'external_api_design',
+    enforcement: 'capability-verification',
+    description: `实现方案依赖外部系统的未确认能力时，必须先验证。
+
+【触发条件】（满足任一）
+- 依赖外部 API/服务的回调/交互机制
+- 使用未验证过的外部系统高级功能
+- 假设外部系统支持某种能力但未查阅文档
+
+【必须执行】
+1. 查阅官方文档 → 确认能力是否存在
+2. 发送最小测试 → 验证可行性
+3. 记录限制 → 作为设计约束
+
+【不触发】
+- 内部逻辑实现
+- 已熟悉的库/框架基本功能
+- 标准 CRUD 操作
+
+【案例】DD-009 Discord 按钮方案（2026-04-22）
+- 假设 Webhook 支持按钮交互
+- 未查阅 Discord API 文档限制
+- 实现 NotifyService 支持 components
+- 发送测试消息才发现 Webhook 不支持交互回调
+- 浪费 30 分钟开发时间，改用 /meeting 指令方案
+
+【正确流程】
+设计方案 → 查阅文档限制 → 发送最小测试 → 验证可行 → 开发`,
+  },
 };
 
 // ========================================
